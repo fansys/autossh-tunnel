@@ -1,3 +1,24 @@
+# ── Secrets & credentials (CRITICAL) ──────────────────
+.env
+.env.*
+.envrc
+*.key
+*.pem
+*.p12
+credentials*
+service-account*
+
+# ── Git ───────────────────────────────────────────────
 .git
+.gitignore
+
+# ── AI coding agents ─────────────────────────────────
+.claude/
+.opencode/
+.codex/
+CLAUDE.md
+AGENTS.md
+
+# ── Misc ─────────────────────────────────────────────
 .DS_Store
 *.log
