@@ -1,6 +1,6 @@
 # Multi-stage build for AutoSSH Tunnel Manager (Pure Go SSH Engine)
 ARG REGISTRY_MIRROR=docker.io
-FROM ${REGISTRY_MIRROR}/library/golang:1.25.14-alpine AS builder
+FROM ${REGISTRY_MIRROR}/library/golang:1.25-alpine AS builder
 
 WORKDIR /app
 

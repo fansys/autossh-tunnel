@@ -1,6 +1,6 @@
 module github.com/oaklight/autossh-tunnel
 
-go 1.25.14
+go 1.25.0
 
 require (
 	github.com/creack/pty v1.1.24
