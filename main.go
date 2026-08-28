@@ -124,6 +124,9 @@ func main() {
 		staticFS = http.FS(sub)
 	}
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticFS)))
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/static/favicon.svg", http.StatusMovedPermanently)
+	})
 
 	// Helper to load templates (local files or embedded FS)
 	loadTemplate := func(tmplName string) (*template.Template, error) {

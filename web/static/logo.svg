@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Clean Rounded Square Base -->
+  <rect width="64" height="64" rx="16" fill="url(#logoBg)"/>
+
+  <!-- Left: Bold Terminal Prompt ">" (SSH Symbol) -->
+  <path d="M14 18 L27 32 L14 46" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right: Top Forward Tunnel Arrow (Left to Right) -->
+  <path d="M33 24 H48" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+  <path d="M42 18 L48 24 L42 30" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right: Bottom Backward Tunnel Arrow (Right to Left) -->
+  <path d="M48 40 H33" stroke="#4ADE80" stroke-width="5" stroke-linecap="round"/>
+  <path d="M39 34 L33 40 L39 46" stroke="#4ADE80" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

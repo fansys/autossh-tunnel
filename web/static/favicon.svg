@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Badge -->
+  <rect width="32" height="32" rx="8" fill="url(#favBg)"/>
+
+  <!-- Left: Bold Terminal Prompt ">" -->
+  <path d="M7 9 L13.5 16 L7 23" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right: Top Forward Arrow -->
+  <path d="M16 12 H24" stroke="#38BDF8" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M21 9 L24.5 12 L21 15" stroke="#38BDF8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right: Bottom Return Arrow -->
+  <path d="M24 20 H16" stroke="#4ADE80" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M19 17 L15.5 20 L19 23" stroke="#4ADE80" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
