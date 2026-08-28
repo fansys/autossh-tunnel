@@ -58,9 +58,9 @@ func main() {
 
 	configPath := os.Getenv("AUTOSSH_CONFIG_FILE")
 	if configPath == "" {
-		configPath = "/etc/autossh/config/config.yaml"
+		configPath = "/etc/autossh/config.yaml"
 		// Fallback for local development or single binary
-		if _, err := os.Stat("/etc/autossh/config"); os.IsNotExist(err) {
+		if _, err := os.Stat("/etc/autossh"); os.IsNotExist(err) {
 			configPath = "./config/config.yaml"
 		}
 	}
@@ -68,21 +68,21 @@ func main() {
 	configDir := filepath.Dir(configPath)
 	logDir := os.Getenv("LOG_DIR")
 	if logDir == "" {
-		logDir = "/tmp/autossh-logs"
+		logDir = filepath.Join(configDir, "logs")
 	}
 	sshConfigDir := os.Getenv("SSH_CONFIG_DIR")
 	if sshConfigDir == "" {
-		if _, err := os.Stat("/home/myuser/.ssh"); err == nil {
-			sshConfigDir = "/home/myuser/.ssh"
+		if _, err := os.Stat("/root/.ssh"); err == nil {
+			sshConfigDir = "/root/.ssh"
 		} else {
 			sshConfigDir = filepath.Join(configDir, "keys")
 		}
 	}
 	apiKeyEnv := os.Getenv("API_KEY")
 
-	// Ensure config directory exists
+	// Ensure directories exist
 	_ = os.MkdirAll(configDir, 0755)
-	_ = os.MkdirAll(logDir, 0777)
+	_ = os.MkdirAll(logDir, 0755)
 
 	printBanner(port)
 
@@ -104,7 +104,7 @@ func main() {
 
 	staticDir := "web/static"
 	// 5. Initialize API Handler
-	apiHandler := api.NewHandler(authMgr, cfgMgr, tunnelMgr, termMgr, staticDir, version)
+	apiHandler := api.NewHandler(authMgr, cfgMgr, tunnelMgr, termMgr, staticDir, sshConfigDir, version)
 
 	// Initial tunnel sync
 	tunnelMgr.SyncWithConfig()

@@ -38,7 +38,7 @@ A modern, all-in-one SSH tunnel management system built with pure Go native SSH 
 
 ### 1. Using Docker Compose (Recommended)
 
-Create a `compose.yaml` file:
+Create a `docker-compose.yml` file:
 
 ```yaml
 services:
@@ -46,12 +46,9 @@ services:
     image: ghcr.io/fansys/autossh-tunnel:latest
     container_name: autossh-tunnel
     volumes:
-      - ~/.ssh:/home/myuser/.ssh:ro
-      - ./config:/etc/autossh/config:rw
+      - ./config:/etc/autossh:rw
     environment:
       - TZ=Asia/Shanghai
-      - PUID=1000
-      - PGID=1000
       - PORT=8080
       # Initial Admin credentials (Default: admin / admin888)
       - USERNAME=admin

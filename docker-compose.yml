@@ -2,13 +2,11 @@ name: autotunnel
 services:
   autossh:
     image: ghcr.io/fansys/autossh-tunnel:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    container_name: autossh-tunnel
     volumes:
-      - ./config:/etc/autossh/config:rw
+      - ./config:/etc/autossh:rw
       # Optional: uncomment if you want to reuse existing host SSH keys directly
-      # - ~/.ssh:/home/myuser/.ssh:ro
+      # - ~/.ssh:/root/.ssh:ro
     environment:
       - TZ=Asia/Shanghai
       - PORT=8080

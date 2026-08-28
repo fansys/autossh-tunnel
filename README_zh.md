@@ -46,7 +46,7 @@ services:
     image: ghcr.io/fansys/autossh-tunnel:latest
     container_name: autossh-tunnel
     volumes:
-      - ./config:/etc/autossh/config:rw
+      - ./config:/etc/autossh:rw
     environment:
       - TZ=Asia/Shanghai
       - PORT=8080

@@ -340,7 +340,7 @@ func TestCompleteEndToEndSuite(t *testing.T) {
 	defer tunnelMgr.StopAll()
 
 	termMgr := terminal.NewSessionManager(cfgMgr)
-	apiHandler := api.NewHandler(authMgr, cfgMgr, tunnelMgr, termMgr, "web/static", "test")
+	apiHandler := api.NewHandler(authMgr, cfgMgr, tunnelMgr, termMgr, "web/static", tempDir, "test")
 
 	// Verify Admin Credentials initialized in config.yaml
 	u, _ := cfgMgr.GetAdminCredentials()

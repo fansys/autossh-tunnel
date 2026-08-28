@@ -17,12 +17,13 @@ import (
 )
 
 type Handler struct {
-	authMgr    *auth.Manager
-	cfgMgr     *config.Manager
-	tunnelMgr  *sshtunnel.Manager
-	termMgr    *terminal.SessionManager
-	staticDir  string
-	version    string
+	authMgr      *auth.Manager
+	cfgMgr       *config.Manager
+	tunnelMgr    *sshtunnel.Manager
+	termMgr      *terminal.SessionManager
+	staticDir    string
+	sshConfigDir string
+	version      string
 }
 
 func NewHandler(
@@ -31,15 +32,17 @@ func NewHandler(
 	tunnelMgr *sshtunnel.Manager,
 	termMgr *terminal.SessionManager,
 	staticDir string,
+	sshConfigDir string,
 	version string,
 ) *Handler {
 	return &Handler{
-		authMgr:   authMgr,
-		cfgMgr:    cfgMgr,
-		tunnelMgr: tunnelMgr,
-		termMgr:   termMgr,
-		staticDir: staticDir,
-		version:   version,
+		authMgr:      authMgr,
+		cfgMgr:       cfgMgr,
+		tunnelMgr:    tunnelMgr,
+		termMgr:      termMgr,
+		staticDir:    staticDir,
+		sshConfigDir: sshConfigDir,
+		version:      version,
 	}
 }
 
@@ -351,7 +354,7 @@ func (h *Handler) HandleTestConnection(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	start := time.Now()
-	client, err := sshtunnel.DialSSH(ctx, &t, "/home/myuser/.ssh")
+	client, err := sshtunnel.DialSSH(ctx, &t, h.sshConfigDir)
 	elapsed := time.Since(start).Milliseconds()
 
 	if err == nil {
