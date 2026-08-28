@@ -4,14 +4,9 @@ IMAGE_TAG ?= latest
 VERSION ?= latest
 PLATFORMS ?= linux/amd64,linux/arm64
 
-# Registry mirror and proxy support
+# Registry mirror support
 REGISTRY_MIRROR ?= docker.io
-GOPROXY ?= https://goproxy.cn,direct
-
 BUILD_ARGS = --build-arg REGISTRY_MIRROR=$(REGISTRY_MIRROR)
-ifneq ($(GOPROXY),)
-BUILD_ARGS += --build-arg GOPROXY=$(GOPROXY)
-endif
 
 .PHONY: all build test push clean run
 

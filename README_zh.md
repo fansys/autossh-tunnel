@@ -1,7 +1,7 @@
 # SSH 隧道管理器 (SSH Tunnel Manager)
 
 [![GitHub Container Registry](https://img.shields.io/badge/docker-ghcr.io%2Ffansys%2Fautossh--tunnel-blue?logo=docker)](https://github.com/fansys/autossh-tunnel/pkgs/container/autossh-tunnel)
-[![Go Report Card](https://img.shields.io/badge/go-1.24-blue?logo=go)](https://golang.org)
+[![Go Report Card](https://img.shields.io/badge/go-1.25-blue?logo=go)](https://golang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?logo=tailwind-css)](https://tailwindcss.com)
 
 [中文版](README_zh.md) | [English](README_en.md)

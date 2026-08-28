@@ -1,14 +1,12 @@
 # Multi-stage build for AutoSSH Tunnel Manager (Pure Go SSH Engine)
 ARG REGISTRY_MIRROR=docker.io
-FROM ${REGISTRY_MIRROR}/library/golang:1.24-alpine AS builder
+FROM ${REGISTRY_MIRROR}/library/golang:1.25-alpine AS builder
 
-ARG GOPROXY
 WORKDIR /app
 
 # Cache dependencies
 COPY go.mod go.sum ./
-RUN if [ -n "$GOPROXY" ]; then export GOPROXY="$GOPROXY"; fi && \
-    go mod download
+RUN go mod download
 
 # Copy source code
 COPY main.go ./

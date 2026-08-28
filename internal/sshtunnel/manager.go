@@ -351,7 +351,7 @@ func listenTCPWithReuse(ctx context.Context, address string) (net.Listener, erro
 		Control: func(network, address string, c syscall.RawConn) error {
 			var operr error
 			err := c.Control(func(fd uintptr) {
-				operr = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+				operr = setReuseAddr(fd)
 			})
 			if err != nil {
 				return err
