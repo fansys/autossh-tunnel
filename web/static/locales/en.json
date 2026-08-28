@@ -28,7 +28,7 @@
   },
   "table": {
     "headers": {
-      "controls": "Controls",
+      "controls": "Toggle",
       "name": "Name",
       "status": "Status",
       "remote_host": "Remote Host",

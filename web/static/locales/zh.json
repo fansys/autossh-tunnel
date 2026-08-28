@@ -28,7 +28,7 @@
   },
   "table": {
     "headers": {
-      "controls": "控制",
+      "controls": "开关",
       "name": "名称",
       "status": "状态",
       "remote_host": "远程主机",
