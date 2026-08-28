@@ -426,6 +426,25 @@
         </div>
     </div>
 
+    <!-- 6. Universal Confirm / Alert Dialog (Replaces native browser alert & confirm) -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-slate-900 dark:text-slate-100 flex flex-col items-center text-center">
+            <div id="confirmIconContainer" class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-rose-500/10 text-rose-500">
+                <i id="confirmIcon" class="material-icons text-2xl">warning</i>
+            </div>
+            <h3 id="confirmTitle" class="text-base font-bold text-slate-900 dark:text-white mb-1.5">确认操作</h3>
+            <p id="confirmMessage" class="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">确定要执行此操作吗？</p>
+            <div class="flex items-center justify-center gap-2.5 w-full">
+                <button id="btnConfirmCancel" class="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-xl transition-all">
+                    取消
+                </button>
+                <button id="btnConfirmOk" class="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-rose-500/20 active:scale-[0.98] transition-all">
+                    确认
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Vendor Scripts -->
     <script src="/static/vendor/xterm/xterm.js"></script>
     <script src="/static/vendor/xterm/xterm-addon-fit.js"></script>

@@ -24,7 +24,8 @@ function t(key, fallback = '') {
     return fallback || key;
 }
 
-// Modern Toast Notification
+// ----------------- Modern Toast Notification -----------------
+
 function showToast(message, type = 'info') {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -56,12 +57,10 @@ function showToast(message, type = 'info') {
 
     container.appendChild(toast);
 
-    // Trigger animate-in
     setTimeout(() => {
         toast.classList.remove('opacity-0', 'translate-y-3');
     }, 20);
 
-    // Auto dismiss
     setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-3');
         setTimeout(() => {
@@ -69,6 +68,70 @@ function showToast(message, type = 'info') {
         }, 300);
     }, 3500);
 }
+
+// ----------------- Custom Tailwind Confirm / Alert Dialog -----------------
+
+function showConfirmDialog(title, message, options = {}) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirmModal');
+        const titleEl = document.getElementById('confirmTitle');
+        const msgEl = document.getElementById('confirmMessage');
+        const iconContainer = document.getElementById('confirmIconContainer');
+        const iconEl = document.getElementById('confirmIcon');
+        const btnOk = document.getElementById('btnConfirmOk');
+        const btnCancel = document.getElementById('btnConfirmCancel');
+
+        if (!modal || !titleEl || !msgEl || !btnOk || !btnCancel) {
+            // Fallback
+            resolve(true);
+            return;
+        }
+
+        titleEl.innerText = title || t('modals.confirm_title', '确认操作');
+        msgEl.innerText = message || t('modals.confirm_msg', '确定要执行此操作吗？');
+
+        const isDanger = (options.type === 'danger' || options.isDanger !== false);
+        if (isDanger) {
+            if (iconContainer) iconContainer.className = 'w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-rose-500/10 text-rose-500';
+            if (iconEl) iconEl.innerText = 'warning';
+            btnOk.className = 'flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-rose-500/20 active:scale-[0.98] transition-all';
+        } else {
+            if (iconContainer) iconContainer.className = 'w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-indigo-500/10 text-indigo-500';
+            if (iconEl) iconEl.innerText = 'help_outline';
+            btnOk.className = 'flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 active:scale-[0.98] transition-all';
+        }
+
+        btnOk.innerText = options.okText || t('buttons.ok', '确认');
+        btnCancel.innerText = options.cancelText || t('buttons.cancel', '取消');
+
+        const cleanup = () => {
+            modal.classList.add('hidden');
+            btnOk.onclick = null;
+            btnCancel.onclick = null;
+        };
+
+        btnOk.onclick = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        btnCancel.onclick = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        modal.classList.remove('hidden');
+    });
+}
+
+function showAlertDialog(title, message, type = 'error') {
+    showToast(message, type);
+}
+
+// Override native window.alert and window.confirm to guarantee zero native popups
+window.alert = function(msg) {
+    showToast(msg, 'warning');
+};
 
 async function apiRequest(url, options = {}) {
     const defaultHeaders = { 'Content-Type': 'application/json' };
@@ -165,7 +228,6 @@ function renderTunnelTable(tunnels) {
     let html = '';
     tunnels.forEach(rt => {
         const tObj = rt.config || {};
-        // Any active, degraded, or retrying state is treated as ENABLED / RUNNING
         const isServiceEnabled = (rt.status === 'active' || rt.status === 'degraded' || rt.status === 'retrying');
         const hash = rt.hash || '';
 
@@ -187,9 +249,9 @@ function renderTunnelTable(tunnels) {
         }
 
         // Direction text
-        let dirLabel = t('table.direction.remote_to_local', '远程->本地 (-L)');
-        if (tObj.direction === 'local_to_remote') dirLabel = t('table.direction.local_to_remote', '本地->远程 (-R)');
-        else if (tObj.direction === 'dynamic_socks5') dirLabel = t('table.direction.dynamic_socks5', 'SOCKS5 (-D)');
+        let dirLabel = t('table.direction.remote_to_local', '远程到本地 (-L)');
+        if (tObj.direction === 'local_to_remote') dirLabel = t('table.direction.local_to_remote', '本地到远程 (-R)');
+        else if (tObj.direction === 'dynamic_socks5') dirLabel = t('table.direction.dynamic_socks5', '动态 SOCKS5 代理 (-D)');
 
         // Auth Method
         let authLabel = t('table.auth.key', 'SSH 密钥');
@@ -277,7 +339,7 @@ function formatUptime(secs) {
 // ----------------- Global Dialog Closer (Backdrop & ESC) -----------------
 
 function closeAllModals() {
-    ['tunnelModal', 'yamlModal', 'terminalModal', 'passwordModal', 'diagModal'].forEach(id => {
+    ['tunnelModal', 'yamlModal', 'terminalModal', 'passwordModal', 'diagModal', 'confirmModal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
     });
@@ -288,7 +350,7 @@ function closeAllModals() {
 }
 
 function initGlobalDialogClosers() {
-    ['tunnelModal', 'yamlModal', 'terminalModal', 'passwordModal', 'diagModal'].forEach(id => {
+    ['tunnelModal', 'yamlModal', 'terminalModal', 'passwordModal', 'diagModal', 'confirmModal'].forEach(id => {
         const overlay = document.getElementById(id);
         if (overlay) {
             overlay.addEventListener('click', (e) => {
@@ -334,7 +396,13 @@ async function restartTunnel(hash) {
 }
 
 async function deleteTunnel(hash) {
-    if (!confirm(t('messages.confirm_delete', '确定要删除这条 SSH 隧道配置吗？'))) return;
+    const confirmed = await showConfirmDialog(
+        t('messages.confirm_delete_title', '删除确认'),
+        t('messages.confirm_delete', '确定要删除这条 SSH 隧道配置吗？此操作无法撤销。'),
+        { type: 'danger', okText: t('buttons.delete', '删除') }
+    );
+    if (!confirmed) return;
+
     try {
         await apiRequest(`/api/tunnels/${hash}`, { method: 'DELETE' });
         showToast(t('messages.tunnel_deleted', '隧道已删除'), 'success');
@@ -420,7 +488,13 @@ function initEventListeners() {
 
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) btnLogout.addEventListener('click', async () => {
-        if (!confirm(t('messages.confirm_logout', '确定要退出登录吗？'))) return;
+        const confirmed = await showConfirmDialog(
+            t('messages.confirm_logout_title', '退出登录'),
+            t('messages.confirm_logout', '确定要退出登录吗？'),
+            { type: 'info', okText: t('buttons.logout', '退出') }
+        );
+        if (!confirmed) return;
+
         await apiRequest('/api/auth/logout', { method: 'POST' });
         window.location.href = '/login';
     });
@@ -466,7 +540,7 @@ function openTunnelModal(tObj = null) {
 
     if (tObj) {
         const titleEl = document.getElementById('tunnelModalTitle');
-        if (titleEl) titleEl.innerText = t('tunnel_detail.edit_title', '编辑 SSH 隧道');
+        if (titleEl) titleEl.innerText = t('modals.edit_tunnel', '编辑 SSH 隧道');
 
         setElValue('formHash', tObj.hash);
         setElValue('formName', tObj.name);
@@ -500,7 +574,7 @@ function openTunnelModal(tObj = null) {
         setElValue('formRetryInterval', tObj.retry_interval);
     } else {
         const titleEl = document.getElementById('tunnelModalTitle');
-        if (titleEl) titleEl.innerText = t('tunnel_detail.add_title', '添加 SSH 隧道');
+        if (titleEl) titleEl.innerText = t('modals.add_tunnel', '添加 SSH 隧道');
 
         setElValue('formHash', '');
         setElValue('formName', '');
@@ -667,7 +741,7 @@ async function handleTestConnection() {
         resBox.innerHTML = `<strong>❌ 测试异常:</strong> ${escapeHtml(err.message)}`;
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="material-icons text-base text-indigo-500">speed</i> 测试连接 (Pre-flight Check)';
+        btn.innerHTML = '<i class="material-icons text-base text-indigo-500">speed</i> 测试连接';
     }
 }
 
@@ -737,7 +811,7 @@ async function showDiagnostics(hash) {
     const content = document.getElementById('diagContent');
     const logsBox = document.getElementById('diagLogs');
 
-    if (title) title.innerText = `隧道诊断分析 - ${item.config?.name || hash.substring(0, 8)}`;
+    if (title) title.innerText = `${t('modals.diagnostics', '隧道诊断分析')} - ${item.config?.name || hash.substring(0, 8)}`;
 
     let diagHtml = '';
     if (item.diagnostic) {
@@ -785,7 +859,7 @@ function closeDiagModal() {
 
 function openTerminal(hash, name) {
     const titleEl = document.getElementById('terminalTitle');
-    if (titleEl) titleEl.innerHTML = `<i class="material-icons text-purple-400 text-base">terminal</i> 交互式终端认证 - ${escapeHtml(name)}`;
+    if (titleEl) titleEl.innerHTML = `<i class="material-icons text-purple-400 text-base">terminal</i> ${t('modals.terminal', '交互式终端')} - ${escapeHtml(name)}`;
 
     const container = document.getElementById('terminalContainer');
     if (!container) return;
