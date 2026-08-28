@@ -1,0 +1,24 @@
+name: autotunnel
+services:
+  autossh:
+    image: ghcr.io/fansys/autossh-tunnel:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ~/.ssh:/home/myuser/.ssh:ro
+      - ./config:/etc/autossh/config:rw
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=1000
+      - PGID=1000
+      - PORT=8080
+      # Web Console Admin Authentication (Default: admin / admin888)
+      - USERNAME=admin
+      - PASSWORD=admin888
+      # Optional: Persistent JWT secret for stateless sessions
+      # - JWT_SECRET=your-secure-jwt-secret-string
+      # Optional: API Key for programmatic REST API access (Bearer token)
+      # - API_KEY=your-secret-api-key
+    network_mode: "host"
+    restart: always

@@ -4,59 +4,21 @@
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 
-# Export autossh-cli environment variables if set
-# These are used by autossh-cli to locate config and state files
-if [ -n "$AUTOSSH_CONFIG_FILE" ]; then
-	export AUTOSSH_CONFIG_FILE
-fi
-if [ -n "$SSH_CONFIG_DIR" ]; then
-	export SSH_CONFIG_DIR
-fi
-if [ -n "$AUTOSSH_STATE_FILE" ]; then
-	export AUTOSSH_STATE_FILE
-fi
-
-# Export WebSocket server environment variables if set
-for _var in WS_PORT WS_MAX_CONNECTIONS WS_IDLE_TIMEOUT WS_MAX_DURATION WS_ALLOWED_ORIGINS; do
-	eval "[ -n \"\$$_var\" ] && export $_var"
-done
-
 # Modify the existing user and group to match PUID and PGID
 if [ "$(id -u myuser)" != "$PUID" ] || [ "$(id -g myuser)" != "$PGID" ]; then
 	sed -i "s/^myuser:x:[0-9]*:[0-9]*:/myuser:x:$PUID:$PGID:/" /etc/passwd
 	sed -i "s/^mygroup:x:[0-9]*:/mygroup:x:$PGID:/" /etc/group
 fi
 
-# Ensure state file directory exists and is writable
-mkdir -p /tmp
-chmod 777 /tmp
-
-# Ensure log directory exists with proper permissions
-mkdir -p /tmp/autossh-logs
+# Ensure log and temporary directories exist with proper ownership
+mkdir -p /tmp/autossh-logs /home/myuser/.ssh
 chmod 777 /tmp/autossh-logs
-
-# Clean up old log files on container start
-rm -f /tmp/autossh-logs/*.log
-
-# Clean up state file on container start to ensure accuracy
-# The state file will be recreated with actual running tunnels
-rm -f /tmp/autossh_tunnels.state
-touch /tmp/autossh_tunnels.state
-chmod 666 /tmp/autossh_tunnels.state
-chown myuser:mygroup /tmp/autossh_tunnels.state
-
-# Also ensure log directory is owned by myuser
-chown -R myuser:mygroup /tmp/autossh-logs
-
-# Ensure home directory has proper ownership after PUID/PGID change
-# (needed for interactive auth socket directory creation)
-chown myuser:mygroup /home/myuser
+chown -R myuser:mygroup /tmp/autossh-logs /home/myuser
 
 # Ensure config directory has proper ownership
-# (Docker creates bind-mount directories as root if they don't exist on the host)
 if [ -d /etc/autossh/config ]; then
 	chown -R myuser:mygroup /etc/autossh/config
 fi
 
-# Switch to myuser and execute the command passed as arguments
+# Switch to myuser and execute the server binary
 exec su-exec myuser "$@"

@@ -19,6 +19,13 @@
     "scheme_blue": "Blue",
     "scheme_slate": "Slate"
   },
+  "stats": {
+    "total": "Total Tunnels",
+    "healthy": "Healthy",
+    "degraded": "Degraded",
+    "failed": "Failed / Retrying",
+    "stopped": "Stopped"
+  },
   "table": {
     "headers": {
       "controls": "Controls",
@@ -28,17 +35,21 @@
       "remote_port": "Remote Port",
       "local_port": "Local Port",
       "direction": "Direction",
+      "auth": "Auth Method",
+      "performance": "Latency / Traffic",
       "actions": "Actions"
     },
     "placeholders": {
       "tunnel_name": "Tunnel name",
       "remote_host": "Remote host",
       "remote_port": "Remote port (e.g., 44497 or hostname:44497)",
-      "local_port": "Local port (e.g., 55001 or 192.168.1.100:55001)"
+      "local_port": "Local port (e.g., 55001 or 192.168.1.100:55001)",
+      "unnamed": "Unnamed Tunnel"
     },
     "direction": {
-      "remote_to_local": "Remote to Local",
-      "local_to_remote": "Local to Remote"
+      "remote_to_local": "Remote to Local (-L)",
+      "local_to_remote": "Local to Remote (-R)",
+      "dynamic_socks5": "Dynamic SOCKS5 Proxy (-D)"
     },
     "status": {
       "running": "RUNNING",
@@ -46,13 +57,25 @@
       "dead": "DEAD",
       "starting": "STARTING",
       "stopped": "STOPPED",
+      "degraded": "DEGRADED",
+      "retrying": "RETRYING",
+      "failed": "FAILED",
+      "interactive": "NEEDS AUTH",
       "na": "N/A",
       "loading": "Loading...",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "no_tunnels": "No tunnels configured yet. Click \"Add Tunnel\" above to create one."
+    },
+    "auth": {
+      "key": "SSH Key",
+      "password": "Password",
+      "interactive": "2FA / Interactive"
     }
   },
   "buttons": {
     "add": "Add",
+    "start_all": "Start All",
+    "stop_all": "Stop All",
     "save_restart": "Save & Restart",
     "save_restart_row": "Save & Restart this tunnel",
     "delete": "Delete tunnel",
@@ -67,7 +90,16 @@
     "interactive_restart_terminal": "Restart with Interactive Auth",
     "refresh": "Refresh",
     "auto_refresh": "Auto Refresh (5s)",
-    "copy_hash": "Copy hash"
+    "copy_hash": "Copy hash",
+    "cancel": "Cancel",
+    "save_apply": "Save & Apply",
+    "save_yaml": "Save YAML & Reload",
+    "save_password": "Save Changes",
+    "close": "Close",
+    "open_terminal": "Open Interactive Terminal",
+    "diagnostics": "Logs & Diagnostics",
+    "edit": "Edit Configuration",
+    "saving": "Saving..."
   },
   "tooltips": {
     "add_tunnel": "Add Tunnel",
@@ -98,7 +130,23 @@
     "interactive_restart_hint": "This tunnel requires interactive authentication. Please stop it first, then start via terminal:\ndocker compose exec -it -u myuser autossh autossh-cli auth {hash}",
     "hash_copied": "Hash copied to clipboard",
     "copy_failed": "Failed to copy to clipboard",
-    "click_to_copy": "Click to copy"
+    "click_to_copy": "Click to copy",
+    "tunnel_stopped": "Tunnel stopped",
+    "tunnel_started": "Tunnel started",
+    "tunnel_restarted": "Tunnel restarted",
+    "confirm_delete": "Are you sure you want to delete this tunnel configuration?",
+    "tunnel_deleted": "Tunnel deleted",
+    "all_started": "All tunnels started",
+    "all_stopped": "All tunnels stopped",
+    "status_refreshed": "Status refreshed",
+    "confirm_logout": "Are you sure you want to log out?",
+    "tunnel_saved": "Configuration saved successfully",
+    "testing": "Testing connection, please wait...",
+    "test_success": "Connection test successful!",
+    "test_failed": "Connection failed",
+    "yaml_saved": "YAML configuration saved and reloaded",
+    "password_mismatch": "New passwords do not match",
+    "password_changed": "Password changed successfully, please log in again"
   },
   "validation": {
     "port_range": "Port must be between 1 and 65535",
@@ -118,7 +166,9 @@
     "status": "Status",
     "controls": "Controls",
     "logs": "Logs",
-    "no_logs": "No logs available yet. Start the tunnel to see logs."
+    "no_logs": "No logs available yet. Start the tunnel to see logs.",
+    "edit_title": "Edit SSH Tunnel",
+    "add_title": "Add SSH Tunnel"
   },
   "help": {
     "toc": "Table of Contents",
@@ -304,5 +354,69 @@
     "confirm_close": "Authentication session is active. Close terminal?",
     "close_hint": "You may close this terminal.",
     "footer_hint": "Type your password or 2FA code when prompted. Press Enter to submit."
+  },
+  "form": {
+    "sections": {
+      "basic": "Basic Configuration",
+      "auth": "Authentication Settings",
+      "advanced": "Advanced SSH Options",
+      "health_retry": "Health Check & Auto Retry Policy"
+    },
+    "name": "Tunnel Name",
+    "direction": "Forwarding Direction",
+    "direction_r2l": "Remote to Local (-L)",
+    "direction_l2r": "Local to Remote (-R)",
+    "direction_socks5": "Dynamic SOCKS5 Proxy (-D)",
+    "remote_host": "Remote Host *",
+    "remote_host_tip": "Supports user@host or ~/.ssh/config alias",
+    "remote_port": "Remote Port",
+    "local_port": "Local Port *",
+    "auth_type": "Authentication Type",
+    "auth_key": "SSH Key Authentication",
+    "auth_password": "Password Authentication",
+    "auth_interactive": "2FA / Keyboard Interactive",
+    "private_key_label": "Private Key Input",
+    "private_key_sublabel": "(Paste private key text, automatically saved securely, never echoed in plaintext)",
+    "key_saved_notice": "Private key saved. Paste a new key to overwrite.",
+    "password_label": "SSH Login Password",
+    "password_saved_notice": "Password configured. Leave blank to keep unchanged.",
+    "password_env_label": "Or specify password environment variable name",
+    "interactive_notice": "Interactive tunnels require manual 2FA verification code or password input via Terminal.",
+    "test_connection": "Test Connection",
+    "ssh_port": "SSH Port",
+    "connect_timeout": "Connect Timeout (seconds)",
+    "alive_interval": "Server Alive Interval (seconds)",
+    "hostkey_policy": "Host Key Policy",
+    "hostkey_accept_new": "Auto-trust first key (accept-new)",
+    "hostkey_no": "Disable checking (no)",
+    "hostkey_yes": "Strict verification (yes)",
+    "proxy_jump": "Jump Host Proxy",
+    "auto_restart": "Auto restart on disconnection",
+    "health_check": "Enable keepalive health check",
+    "max_retries": "Max Retries",
+    "retry_interval": "Initial Retry Interval (seconds)"
+  },
+  "modals": {
+    "add_tunnel": "Add SSH Tunnel",
+    "edit_tunnel": "Edit SSH Tunnel",
+    "yaml_editor": "Online config.yaml Editor",
+    "change_password": "Change Admin Password",
+    "diagnostics": "Tunnel Diagnostics",
+    "terminal": "Interactive Terminal",
+    "recent_logs": "Recent Runtime Logs:",
+    "old_password": "Old Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm New Password"
+  },
+  "login": {
+    "title": "SSH Tunnel Manager",
+    "subtitle": "Please log in to manage your SSH tunnels",
+    "username": "Username",
+    "password": "Password",
+    "button": "Log In",
+    "logging_in": "Logging in...",
+    "invalid_credentials": "Invalid username or password",
+    "network_error": "Network error, please try again later",
+    "footer": "AutoSSH Tunnel Manager"
   }
 }

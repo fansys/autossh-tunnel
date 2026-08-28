@@ -1,366 +1,148 @@
-# 基于 Docker 和 Autossh 的 SSH 隧道管理器
+# SSH 隧道管理器 (SSH Tunnel Manager)
 
-[![Docker - autossh-tunnel](https://img.shields.io/docker/v/oaklight/autossh-tunnel?sort=semver&label=autossh-tunnel&color=green)](https://hub.docker.com/r/oaklight/autossh-tunnel)
-[![Docker - autossh-tunnel-web-panel](https://img.shields.io/docker/v/oaklight/autossh-tunnel-web-panel?sort=semver&label=autossh-tunnel-web-panel&color=green)](https://hub.docker.com/r/oaklight/autossh-tunnel-web-panel)
+[![GitHub Container Registry](https://img.shields.io/badge/docker-ghcr.io%2Ffansys%2Fautossh--tunnel-blue?logo=docker)](https://github.com/fansys/autossh-tunnel/pkgs/container/autossh-tunnel)
+[![Go Report Card](https://img.shields.io/badge/go-1.24-blue?logo=go)](https://golang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?logo=tailwind-css)](https://tailwindcss.com)
 
 [中文版](README_zh.md) | [English](README_en.md)
 
-![网页面板界面](https://github.com/user-attachments/assets/bb26d0f5-14ee-4289-b809-e48381c05bc1)
-
-本项目提供了一个基于 Docker 的解决方案，使用 `autossh` 和 YAML 配置文件来管理 SSH 隧道。此设置允许您轻松地**将本地服务通过 SSH 隧道暴露到远程服务器**或**将远程服务映射到本地端口**，方便访问防火墙后的服务。
-
-## 功能特性
-
-- **Docker 化**：使用 Docker 封装环境，易于部署和管理。
-- **非 root 用户**：以非 root 用户运行容器，增强安全性。
-- **YAML 配置**：使用 `config.yaml` 文件定义多个 SSH 隧道映射，支持配置变更时自动重载服务。
-- **Autossh**：自动维护 SSH 连接，确保隧道保持活跃。
-- **动态 UID/GID 支持**：使用 `PUID` 和 `PGID` 环境变量动态设置容器用户的 UID 和 GID，以匹配主机用户权限。
-- **多架构支持**：支持所有 Alpine 基础架构，包括 `linux/amd64`、`linux/arm64/v8`、`linux/arm/v7`、`linux/arm/v6`、`linux/386`、`linux/ppc64le`、`linux/s390x` 和 `linux/riscv64`。
-- **灵活的方向配置**：支持将本地服务暴露到远程服务器（`local_to_remote`）或将远程服务映射到本地端口（`remote_to_local`）。
-- **自动重载**：检测 `config.yaml` 的变化并自动重载服务配置。
-- **Web 配置界面**：通过 Web 面板管理隧道和配置更新。
-- **CLI 工具 (autossh-cli)**：用于管理隧道、查看状态和控制单个隧道的命令行界面。
-- **HTTP API**：用于程序化隧道控制的 RESTful API，支持与其他工具和自动化集成。
-- **单个隧道控制**：独立启动、停止和管理每个隧道，不影响其他隧道。
-
-## 前置要求
-
-- 本地机器上已安装 Docker 和 Docker Compose。
-- 已设置用于访问远程主机的 SSH 密钥。
-
-## 快速链接
-
-- [完整文档 (English)](https://oaklight.github.io/autossh-tunnel-dockerized/en/)
-- [完整文档 (中文)](https://oaklight.github.io/autossh-tunnel-dockerized/zh/)
-
-## 发布版本
-
-打包的 Docker 镜像可在 Docker Hub 上获取：
-
-[Docker Hub 链接](https://hub.docker.com/r/oaklight/autossh-tunnel)
-
-欢迎使用并提供反馈！
-
-## 快速入门
-
-### 1. 下载所需文件
-
-对于大多数用户，您只需要下载 Docker Compose 文件。
-
-**选项 A：直接下载文件**
-
-创建新目录并下载所需文件：
-
-```bash
-mkdir autossh-tunnel
-cd autossh-tunnel
-
-# 下载 docker-compose.yaml（包含 autossh 隧道和网页面板两个服务）
-curl -O https://oaklight.github.io/autossh-tunnel-dockerized/compose.yaml
-
-# 或者使用 jsDelivr CDN（国内用户推荐）
-# curl -O https://cdn.jsdelivr.net/gh/Oaklight/autossh-tunnel-dockerized@master/compose.yaml
-
-# 创建 config 目录
-mkdir config
-
-# 方式1：下载示例配置（如果您想手动配置）
-curl -o config/config.yaml.sample https://oaklight.github.io/autossh-tunnel-dockerized/config/config.yaml.sample
-# 或使用 jsDelivr CDN
-# curl -o config/config.yaml.sample https://cdn.jsdelivr.net/gh/Oaklight/autossh-tunnel-dockerized@master/config/config.yaml.sample
-cp config/config.yaml.sample config/config.yaml
-
-# 方式2：创建空配置文件（如果您想使用网页面板进行配置）
-touch config/config.yaml
-```
-
-> **注意**：`compose.yaml` 文件包含了 autossh 隧道服务和网页面板服务两个部分。网页面板是可选的 - 如果您更喜欢手动配置，可以在 compose 文件中注释掉 `web` 服务部分来禁用它。
-
-**选项 B：克隆仓库（开发者使用）**
-
-如果您想修改源代码或本地构建：
-
-```bash
-git clone https://github.com/Oaklight/autossh-tunnel-dockerized.git
-cd autossh-tunnel-dockerized
-```
-
-### 2. 配置 SSH 密钥
-
-确保您的 SSH 密钥位于 `~/.ssh` 目录中。该目录应包含：
-
-- 私钥文件（例如 `id_ed25519`、`id_rsa`）
-- SSH 配置文件（`config`）
-- 已知主机文件（`known_hosts`）
-
-> **重要提示**：本项目严重依赖 `~/.ssh/config` 文件进行 SSH 连接配置。SSH 配置文件允许您为每个远程主机定义连接参数，如主机名、用户名、端口和密钥文件。如果没有正确的 SSH 配置设置，隧道可能无法建立连接。
-
-有关详细的 SSH 配置文件设置说明，请参阅：[SSH 配置指南](README_ssh_config_zh.md)
-
-### 3. 配置隧道
-
-您有两种配置 SSH 隧道的方式：
-
-#### 方式 A：手动配置
-
-编辑 `config/config.yaml` 文件以定义您的 SSH 隧道映射。
-
-**基本示例：**
-
-```yaml
-tunnels:
-  # 将本地服务暴露到远程服务器
-  - remote_host: "user@remote-host1"
-    remote_port: 22323
-    local_port: 18120
-    direction: local_to_remote
-    
-  # 将远程服务映射到本地端口
-  - remote_host: "user@remote-host2"
-    remote_port: 8000
-    local_port: 8001
-    direction: remote_to_local
-```
-
-**高级配置：指定绑定地址**
-
-如果您希望将远程端口或本地服务绑定到特定 IP 地址，可以使用 `ip:port` 格式：
-
-```yaml
-tunnels:
-  # 指定远程绑定地址
-  - remote_host: "user@remote-host1"
-    remote_port: "192.168.45.130:22323"  # 远程绑定到特定 IP
-    local_port: 18120
-    direction: local_to_remote
-    
-  # 指定本地绑定地址
-  - remote_host: "user@remote-host1"
-    remote_port: 22323
-    local_port: "192.168.1.100:18120"  # 本地绑定到特定 IP
-    direction: local_to_remote
-    
-  # 同时指定远程和本地绑定地址
-  - remote_host: "user@remote-host1"
-    remote_port: "192.168.45.130:22323"
-    local_port: "192.168.1.100:18120"
-    direction: local_to_remote
-```
-
-#### 方式 B：网页面板配置
-
-如果您使用网页面板（包含在 `compose.yaml` 中）：
-
-1. 从空的 `config/config.yaml` 文件开始
-2. 启动服务后访问 `http://localhost:5000`
-3. 通过可视化界面配置隧道
-
-> **提示**：
-> - 网页面板每次保存更改时会自动将配置备份到 `config/backups/` 目录
-> - 您可能需要手动删除过多的备份文件以防止磁盘空间问题
-> - `config/config.yaml` 文件必须存在（即使为空）才能使 autossh 隧道服务正常工作
-
-### 4. 配置用户权限 (PUID/PGID)
-
-在运行容器之前，请确保设置正确的 `PUID` 和 `PGID` 值，以匹配您主机用户的 UID 和 GID。
-
-查看您的用户 UID 和 GID：
-
-```bash
-id
-```
-
-设置方法：
-
-**方法 1：设置环境变量**
-
-```bash
-export PUID=$(id -u)
-export PGID=$(id -g)
-```
-
-**方法 2：直接编辑 compose.yaml 文件**
-
-```yaml
-environment:
-  - PUID=1000
-  - PGID=1000
-```
-
-### 5. 启动服务
-
-#### 使用 Docker Hub 镜像
-
-```bash
-docker compose up -d
-```
-
-#### 本地构建并运行
-
-```bash
-# 构建
-docker compose -f compose.dev.yaml build
-
-# 运行
-docker compose -f compose.dev.yaml up -d
-```
-
-### 6. 验证服务
-
-检查容器状态：
-
-```bash
-docker compose ps
-```
-
-查看日志：
-
-```bash
-docker compose logs -f
-```
-
-访问 Web 面板（如果启用）：
-
-```
-http://localhost:5000
-```
-
-## 隧道方向模式
-
-本项目支持两种隧道方向配置的解释模式：
-
-### 默认模式（服务导向）
-
-默认模式从**服务暴露方向**的角度解释方向配置：
-
-- `local_to_remote`：将**本地**服务暴露**到远程**（使用 SSH `-R`，远程监听）
-- `remote_to_local`：将**远程**服务映射**到本地**（使用 SSH `-L`，本地监听）
-
-### SSH 标准模式
-
-SSH 标准模式与 **SSH 原生术语**保持一致：
-
-- `local_to_remote`：SSH 本地转发（使用 SSH `-L`，本地监听）
-- `remote_to_local`：SSH 远程转发（使用 SSH `-R`，远程监听）
-
-### 切换模式
-
-在 `compose.yaml` 中设置 `TUNNEL_DIRECTION_MODE` 环境变量：
-
-```yaml
-environment:
-  - TUNNEL_DIRECTION_MODE=default        # 默认模式（当前行为）
-  # - TUNNEL_DIRECTION_MODE=ssh-standard # SSH 标准模式
-```
-
-> **注意**：默认模式保持与现有配置的向后兼容性。如果您更喜欢 SSH 的原生术语，请选择 `ssh-standard` 模式。
-
-## 访问服务
-
-容器运行后：
-
-- **本地到远程隧道**（默认模式）：通过远程服务器的指定端口访问本地服务（例如 `remote-host1:22323`）
-- **远程到本地隧道**（默认模式）：通过本地端口访问远程服务（例如 `localhost:8001`）
-
-## 隧道控制 API
-
-本项目提供 CLI 和 HTTP API 两种接口用于高级隧道管理。
-
-### CLI 命令
-
-```bash
-# 列出所有配置的隧道
-autossh-cli list
-
-# 查看隧道运行状态
-autossh-cli status
-
-# 启动特定隧道
-autossh-cli start-tunnel <hash>
-
-# 停止特定隧道
-autossh-cli stop-tunnel <hash>
-
-# 启动所有隧道
-autossh-cli start
-
-# 停止所有隧道
-autossh-cli stop
-```
-
-### HTTP API 端点
-
-| 方法 | 端点            | 描述                   |
-| ---- | --------------- | ---------------------- |
-| GET  | `/list`         | 获取所有配置的隧道列表 |
-| GET  | `/status`       | 获取所有隧道的运行状态 |
-| POST | `/start`        | 启动所有隧道           |
-| POST | `/stop`         | 停止所有隧道           |
-| POST | `/start/<hash>` | 启动指定的隧道         |
-| POST | `/stop/<hash>`  | 停止指定的隧道         |
-
-详细 API 文档请参阅：[隧道控制 API 文档](https://oaklight.github.io/autossh-tunnel-dockerized/zh/api/http-api/)
-
-## 安全注意事项
-
-在启用 `-R` 参数时，远程端口默认绑定到 `localhost`。如果希望通过远程服务器的其他 IP 地址访问隧道，需在远程服务器的 `sshd_config` 中启用 `GatewayPorts` 选项：
-
-```bash
-# 编辑 /etc/ssh/sshd_config
-GatewayPorts clientspecified  # 允许客户端指定绑定地址
-GatewayPorts yes              # 或绑定到所有网络接口
-```
-
-重启 SSH 服务：
-
-```bash
-sudo systemctl restart sshd
-```
-
-启用 `GatewayPorts` 可能会暴露服务到公网，请确保采取适当的安全措施，例如配置防火墙或启用访问控制。
-
-## 故障排除
-
-### SSH 密钥权限
-
-确保 `.ssh` 目录及其内容具有适当的权限：
-
-```bash
-chmod 700 .ssh
-chmod 600 .ssh/*
-```
-
-### Docker 权限
-
-如果在运行 Docker 命令时遇到权限问题，请确保您的用户在 `docker` 组中：
-
-```bash
-sudo usermod -aG docker $USER
-```
-
-### 日志
-
-检查 Docker 容器日志以查找任何错误：
-
-```bash
-docker compose logs -f
-```
-
-更多故障排除技巧，请参阅[完整文档](https://oaklight.github.io/autossh-tunnel-dockerized/zh/)。
-
-## 许可证
-
-本项目基于 MIT 许可证。有关详细信息，请参阅 [LICENSE](LICENSE) 文件。
-
-## 致谢
-
-- [autossh](http://www.harding.motd.ca/autossh/) 用于维护 SSH 连接。
-- [Docker](https://www.docker.com/) 用于容器化。
-- [Alpine Linux](https://alpinelinux.org/) 提供轻量级基础镜像。
-- [Go](https://golang.org/) 用于 Web 面板后端。
-- [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) 提供文档主题。
+基于 Go 原生 SSH 库与 Tailwind CSS 构建的现代化、一体化（All-in-One）SSH 隧道管理系统。通过声明式 YAML 配置或可视化 Web 控制台，轻松实现 **远程端口映射到本地 (`-L`)**、**本地服务暴露到远程 (`-R`)** 以及 **动态 SOCKS5 代理 (`-D`)**。
 
 ---
 
-欢迎通过提交问题或拉取请求来为该项目做出贡献。祝您隧道愉快！
+## 🌟 核心特性
+
+- **单容器极简架构**：Web 控制台、REST API、WebSocket 终端与 SSH 隧道守护整合为单一镜像，无需维护复杂的双容器网络代理。
+- **纯 Go 原生 SSH 引擎**：基于 `golang.org/x/crypto/ssh` 实现，**彻底摆脱外部 autossh / sshpass / openssh 依赖**，单隧道内存开销仅几 KB。
+- **全功能 Web 配置面板**：基于 Tailwind CSS 打造的现代化深/浅色控制台，支持配置 YAML 中的全部参数（端口、心跳、超时、指纹校验策略、ProxyJump 跳板机等）。
+- **多样化认证与私钥安全**：
+  - **密码认证**：直接支持 SSH 密码登录及环境变量引用；
+  - **私钥安全落盘 (Write-Only)**：页面粘贴私钥文本后自动安全写入容器受保护文件（`0600` 权限）并在配置中引用，**页面与接口绝不回显私钥明文**；
+  - **2FA / 交互式认证**：内置 WebSocket Web 终端，支持键盘交互式验证码输入。
+- **一键测试连接 (Pre-flight Check) 与故障智能诊断**：
+  - 保存前可一键即时校验 SSH 连通性；
+  - 智能捕获并识别公钥不匹配、需要密码、指纹未受信、DNS 无法解析、端口被占用等故障，并提供修复建议。
+- **多维健康监控与实时流量统计**：
+  - 实时采集各隧道的 **RTT 往返时延**、**已发送/已接收流量 (Tx/Rx)** 及 **当前活跃连接数**。
+- **智能退避重试 (Exponential Backoff)**：
+  - 异常断开时按指数阶梯自动重连（防网络风暴与对端拉黑）；
+  - 精准记忆运行状态：容器重启时**仅自动拉起处于运行中的隧道**，手动停止的隧道保持停止。
+- **无状态持久化 JWT 鉴权**：
+  - 管理员用户登录拦截，支持修改密码；
+  - JWT Secret 持久化存储，**容器重启无需重新登录**。
+- **极速多语言切换**：支持简体中文与 English 一键单键切换，内置离线静态资源，内网断网环境亦可秒开。
+
+---
+
+## 🚀 快速入门
+
+### 1. 使用 Docker Compose (推荐)
+
+创建 `docker-compose.yml` 文件：
+
+```yaml
+services:
+  autossh:
+    image: ghcr.io/fansys/autossh-tunnel:latest
+    container_name: autossh-tunnel
+    volumes:
+      - ~/.ssh:/home/myuser/.ssh:ro
+      - ./config:/etc/autossh/config:rw
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=1000
+      - PGID=1000
+      - PORT=8080
+      # 初始管理员账号密码 (默认: admin / admin888)
+      - USERNAME=admin
+      - PASSWORD=admin888
+      # 可选: API 自动化调用的 Bearer Key
+      # - API_KEY=your-secret-api-key
+    network_mode: "host"
+    restart: always
+```
+
+### 2. 启动服务
+
+```bash
+mkdir -p config
+docker compose up -d
+```
+
+启动完成后，打开浏览器访问：`http://<您的IP>:8080`，输入管理员账号密码即可进入现代化控制台！
+
+---
+
+## 📖 配置文件示例 (`config/config.yaml`)
+
+您既可以在 Web 页面上可视化添加/修改隧道，也可以直接编辑 `config/config.yaml`：
+
+```yaml
+tunnels:
+  # 示例 1: 基础 SSH 密钥认证隧道 (远程映射到本地端口 -L)
+  - name: "web-service"
+    remote_host: "user@remote-host1.com"
+    remote_port: "8000"
+    local_port: "8001"
+    direction: remote_to_local
+    enabled: true
+
+  # 示例 2: 直接使用密码认证隧道 (支持通过原生 Go SSH 自动连接保活)
+  - name: "database-tunnel"
+    remote_host: "root@remote-db.example.com"
+    remote_port: "3306"
+    local_port: "13306"
+    auth_type: password
+    password: "YourSecurePassword" # 或使用 password_env: "REMOTE_DB_PASS"
+
+  # 示例 3: 动态 SOCKS5 代理隧道 (-D 本地动态代理)
+  - name: "dynamic-socks5-proxy"
+    remote_host: "user@gateway.example.com"
+    local_port: "1080"
+    direction: dynamic_socks5
+
+  # 示例 4: 交互式 2FA/密码隧道 (在 Web 控制台终端手动输入一次性验证码)
+  - name: "jumphost-2fa-tunnel"
+    remote_host: "user@jumphost.example.com"
+    remote_port: "22"
+    local_port: "2222"
+    direction: remote_to_local
+    interactive: true
+
+  # 示例 5: 高级调优配置 (自定义 SSH 选项、心跳保活、跳板机与退避重试)
+  # - name: "advanced-production-tunnel"
+  #   remote_host: "deploy@prod.server.internal"
+  #   remote_port: "443"
+  #   local_port: "8443"
+  #   ssh_port: 2222
+  #   server_alive_interval: 15
+  #   connect_timeout: 8
+  #   strict_host_key_checking: "accept-new"
+  #   proxy_jump: "jumpuser@jumphost:22"
+  #   auto_restart: true
+  #   max_retries: 10
+  #   retry_interval: 5
+```
+
+---
+
+## 🛠️ 本地开发与编译
+
+本项目采用标准 Go 模块构建，无需任何 Node.js / npm 依赖：
+
+```bash
+# 运行单元测试
+make test
+
+# 编译本地二进制
+make build-local
+
+# 本地启动运行
+make run
+```
+
+---
+
+## 📄 开源许可证
+
+本项目采用 [MIT 许可证](LICENSE) 开源。

@@ -1,30 +1,51 @@
+# JWT 签名密钥 (首次启动自动生成并持久化，或由环境变量 JWT_SECRET 指定)
+# jwt_secret: "6c608bd16ea063a1ef9fb2138afd2fc4a6d002823eab4f18be89d04235b4a9c8"
+
+# 管理员控制台账号与密码 (首次启动自动初始化，密码以 bcrypt 哈希持久化保存)
+# username: "admin"
+# password: "$2a$10$YourBcryptPasswordHashHere..."
+
 tunnels:
-  # Basic tunnel example (name is optional)
-  - remote_host: "user@remote-host1"
-    remote_port: 8000
-    local_port: 8001
-
-  # Tunnel with explicit direction
-  - remote_host: "user@remote-host2"
-    remote_port: 9000
-    local_port: 9001
+  # 示例 1: 基础 SSH 密钥认证隧道 (远程映射到本地端口 -L)
+  - name: "web-service"
+    remote_host: "user@remote-host1.com"
+    remote_port: "8000"
+    local_port: "8001"
     direction: remote_to_local
+    enabled: true
 
-  # Interactive tunnel example (requires 2FA or password authentication)
-  # Use 'autossh-cli auth <hash>' to start this tunnel manually
-  # This tunnel will NOT be started automatically
-  - name: "jumphost-tunnel"
+  # 示例 2: 直接使用密码认证隧道 (支持通过原生 Go SSH 自动连接保活)
+  - name: "database-tunnel"
+    remote_host: "root@remote-db.example.com"
+    remote_port: "3306"
+    local_port: "13306"
+    auth_type: password
+    password: "YourSecurePassword" # 或使用 password_env: "REMOTE_DB_PASS"
+
+  # 示例 3: 动态 SOCKS5 代理隧道 (-D 本地动态代理)
+  - name: "dynamic-socks5-proxy"
+    remote_host: "user@gateway.example.com"
+    local_port: "1080"
+    direction: dynamic_socks5
+
+  # 示例 4: 交互式 2FA/密码隧道 (需在 Web 控制台终端手动输入一次性验证码)
+  - name: "jumphost-2fa-tunnel"
     remote_host: "user@jumphost.example.com"
-    remote_port: 22
-    local_port: 2222
+    remote_port: "22"
+    local_port: "2222"
     direction: remote_to_local
     interactive: true
 
-  # Example with host:port format for remote_port and local_port
-  # - name: "custom-bind"
-  #   remote_host: "user@server"
-  #   remote_port: "0.0.0.0:8080"
-  #   local_port: "127.0.0.1:8080"
-  #   direction: local_to_remote
-
-  # Add more tunnels as needed
+  # 示例 5: 高级调优配置 (自定义 SSH 选项、心跳保活、跳板机与退避重试)
+  # - name: "advanced-production-tunnel"
+  #   remote_host: "deploy@prod.server.internal"
+  #   remote_port: "443"
+  #   local_port: "8443"
+  #   ssh_port: 2222
+  #   server_alive_interval: 15
+  #   connect_timeout: 8
+  #   strict_host_key_checking: "accept-new"
+  #   proxy_jump: "jumpuser@jumphost:22"
+  #   auto_restart: true
+  #   max_retries: 10
+  #   retry_interval: 5

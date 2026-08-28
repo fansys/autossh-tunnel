@@ -19,6 +19,13 @@
     "scheme_blue": "蓝色",
     "scheme_slate": "灰色"
   },
+  "stats": {
+    "total": "总隧道数",
+    "healthy": "健康运行",
+    "degraded": "端口异常",
+    "failed": "失败/重试",
+    "stopped": "已停止"
+  },
   "table": {
     "headers": {
       "controls": "控制",
@@ -28,17 +35,21 @@
       "remote_port": "远程端口",
       "local_port": "本地端口",
       "direction": "方向",
+      "auth": "认证方式",
+      "performance": "延迟 / 流量",
       "actions": "操作"
     },
     "placeholders": {
       "tunnel_name": "隧道名称",
       "remote_host": "远程主机",
       "remote_port": "远程端口 (例如：44497 或 hostname:44497)",
-      "local_port": "本地端口 (例如：55001 或 192.168.1.100:55001)"
+      "local_port": "本地端口 (例如：55001 或 192.168.1.100:55001)",
+      "unnamed": "未命名隧道"
     },
     "direction": {
-      "remote_to_local": "远程到本地",
-      "local_to_remote": "本地到远程"
+      "remote_to_local": "远程到本地 (-L)",
+      "local_to_remote": "本地到远程 (-R)",
+      "dynamic_socks5": "动态 SOCKS5 代理 (-D)"
     },
     "status": {
       "running": "运行中",
@@ -46,13 +57,25 @@
       "dead": "已停止",
       "starting": "启动中",
       "stopped": "已停止",
+      "degraded": "端口未通",
+      "retrying": "重试中",
+      "failed": "失败 (查看原因)",
+      "interactive": "需交互认证",
       "na": "不可用",
       "loading": "加载中...",
-      "saving": "保存中..."
+      "saving": "保存中...",
+      "no_tunnels": "暂无配置的隧道，点击上方“添加隧道”开始创建"
+    },
+    "auth": {
+      "key": "SSH 密钥",
+      "password": "密码认证",
+      "interactive": "2FA / 交互式"
     }
   },
   "buttons": {
     "add": "添加",
+    "start_all": "全部启动",
+    "stop_all": "全部停止",
     "save_restart": "保存并重启",
     "save_restart_row": "保存并重启此隧道",
     "delete": "删除隧道",
@@ -67,7 +90,16 @@
     "interactive_restart_terminal": "交互认证重启",
     "refresh": "刷新",
     "auto_refresh": "自动刷新 (5秒)",
-    "copy_hash": "复制哈希值"
+    "copy_hash": "复制哈希值",
+    "cancel": "取消",
+    "save_apply": "保存并应用",
+    "save_yaml": "保存 YAML 并重载",
+    "save_password": "保存修改",
+    "close": "关闭",
+    "open_terminal": "打开交互终端",
+    "diagnostics": "运行日志与诊断",
+    "edit": "编辑配置",
+    "saving": "保存中..."
   },
   "tooltips": {
     "add_tunnel": "添加隧道",
@@ -98,7 +130,23 @@
     "interactive_restart_hint": "此隧道需要交互式认证。请先停止隧道，然后通过终端启动：\ndocker compose exec -it -u myuser autossh autossh-cli auth {hash}",
     "hash_copied": "哈希值已复制到剪贴板",
     "copy_failed": "复制到剪贴板失败",
-    "click_to_copy": "点击复制"
+    "click_to_copy": "点击复制",
+    "tunnel_stopped": "隧道已停止",
+    "tunnel_started": "隧道已启动",
+    "tunnel_restarted": "隧道已重启",
+    "confirm_delete": "确定要删除这条 SSH 隧道配置吗？",
+    "tunnel_deleted": "隧道已删除",
+    "all_started": "已启动全部隧道",
+    "all_stopped": "已停止全部隧道",
+    "status_refreshed": "状态已刷新",
+    "confirm_logout": "确定要退出登录吗？",
+    "tunnel_saved": "配置已保存并生效",
+    "testing": "测试中，请稍候...",
+    "test_success": "测试连接成功！",
+    "test_failed": "连接失败",
+    "yaml_saved": "YAML 配置已成功保存并重载",
+    "password_mismatch": "两次输入的新密码不一致",
+    "password_changed": "密码修改成功，请重新登录"
   },
   "validation": {
     "port_range": "端口必须在 1 到 65535 之间",
@@ -118,7 +166,9 @@
     "status": "状态",
     "controls": "控制操作",
     "logs": "日志",
-    "no_logs": "暂无日志。启动隧道后将显示日志。"
+    "no_logs": "暂无日志。启动隧道后将显示日志。",
+    "edit_title": "编辑 SSH 隧道",
+    "add_title": "添加 SSH 隧道"
   },
   "help": {
     "toc": "目录",
@@ -304,5 +354,69 @@
     "confirm_close": "认证会话正在进行中。关闭终端？",
     "close_hint": "您可以关闭此终端。",
     "footer_hint": "在提示时输入密码或验证码，按 Enter 提交。"
+  },
+  "form": {
+    "sections": {
+      "basic": "基础配置",
+      "auth": "认证方式配置",
+      "advanced": "高级 SSH 选项",
+      "health_retry": "健康检测与自动重试策略"
+    },
+    "name": "隧道名称",
+    "direction": "转发方向",
+    "direction_r2l": "远程到本地 (-L)",
+    "direction_l2r": "本地到远程 (-R)",
+    "direction_socks5": "动态 SOCKS5 代理 (-D)",
+    "remote_host": "远程主机 *",
+    "remote_host_tip": "支持 user@host 或 ~/.ssh/config 别名",
+    "remote_port": "远程端口",
+    "local_port": "本地端口 *",
+    "auth_type": "认证类型",
+    "auth_key": "SSH 密钥认证",
+    "auth_password": "SSH 密码认证",
+    "auth_interactive": "2FA / 键盘交互式认证",
+    "private_key_label": "私钥输入",
+    "private_key_sublabel": "(直接粘贴私钥文本，自动落盘受保护文件，不回显明文)",
+    "key_saved_notice": "已保存私钥。可粘贴新私钥直接覆盖。",
+    "password_label": "SSH 登录密码",
+    "password_saved_notice": "已配置密码。留空表示保持不变。",
+    "password_env_label": "或指定密码环境变量名",
+    "interactive_notice": "交互式隧道需在页面通过“终端”手动输入一次性 2FA 验证码或临时密码。",
+    "test_connection": "测试连接",
+    "ssh_port": "SSH 端口",
+    "connect_timeout": "连接超时秒数",
+    "alive_interval": "心跳保活间隔 (秒)",
+    "hostkey_policy": "主机指纹策略",
+    "hostkey_accept_new": "自动信任首次指纹 (accept-new)",
+    "hostkey_no": "禁用指纹校验 (no)",
+    "hostkey_yes": "严格校验 known_hosts (yes)",
+    "proxy_jump": "跳板机代理",
+    "auto_restart": "断开时自动重试拉起",
+    "health_check": "开启心跳健康探测",
+    "max_retries": "最大重试次数",
+    "retry_interval": "初始重试退避间隔 (秒)"
+  },
+  "modals": {
+    "add_tunnel": "添加 SSH 隧道",
+    "edit_tunnel": "编辑 SSH 隧道",
+    "yaml_editor": "在线编辑 config.yaml",
+    "change_password": "修改管理员密码",
+    "diagnostics": "隧道诊断分析",
+    "terminal": "交互式终端",
+    "recent_logs": "最近运行日志：",
+    "old_password": "原密码",
+    "new_password": "新密码",
+    "confirm_password": "确认新密码"
+  },
+  "login": {
+    "title": "SSH 隧道管理器",
+    "subtitle": "请登录以管理您的 SSH 隧道",
+    "username": "用户名",
+    "password": "密码",
+    "button": "登 录",
+    "logging_in": "登录中...",
+    "invalid_credentials": "用户名或密码错误",
+    "network_error": "网络连接失败，请稍后重试",
+    "footer": "AutoSSH Tunnel Manager"
   }
 }

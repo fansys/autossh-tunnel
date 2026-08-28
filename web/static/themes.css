@@ -1,150 +1,106 @@
-/* ========================================
-   SSH Tunnel Manager — Color Scheme Definitions
-   Each block defines ONLY CSS custom properties.
-   Schemes: Gold (default), Teal, Blue, Slate
-   Modes:   Light (default), Dark
-   ======================================== */
+/* ==========================================================================
+   SSH Tunnel Manager — Modern Dark & Light Design System
+   Matches the sleek visual identity across all pages and modals.
+   ========================================================================== */
 
-/* ---------- Gold Light (default) ---------- */
-:root {
-  --bg-primary: #FAF9F7;
-  --bg-secondary: #FFFFFF;
-  --text-primary: #1B1B18;
-  --text-secondary: #81807C;
-  --accent: #C2922E;
-  --accent-hover: #A67C1E;
-  --accent-light: rgba(194, 146, 46, 0.08);
-  --border: #E8E5E0;
-  --success: #3D8B5F;
-  --error: #C44141;
-  --warning: #C2922E;
-  --input-bg: #FAFAFA;
-  --input-bg-hover: #FFFFFF;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --accent-shadow: rgba(194, 146, 46, 0.25);
-  --accent-shadow-strong: rgba(194, 146, 46, 0.35);
-  --info-bg: #F5F0E5;
-  --info-text: #8B6914;
-  --info-border: #DDD0AE;
-  --tooltip-border: rgba(212, 168, 75, 0.2);
-  --troubleshoot-bg: rgba(194, 146, 46, 0.05);
+/* ---------- 1. Default Dark Theme (Modern Slate) ---------- */
+:root, [data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #090d16;
+  --bg-elevated: #273549;
+
+  --border: #334155;
+  --border-subtle: #1e293b;
+  --border-focus: #6366f1;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-light: rgba(99, 102, 241, 0.15);
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #6366f1);
+  --accent-shadow: rgba(99, 102, 241, 0.35);
+
+  --success: #4ade80;
+  --success-bg: rgba(34, 197, 94, 0.15);
+  --success-border: rgba(34, 197, 94, 0.3);
+
+  --warning: #facc15;
+  --warning-bg: rgba(234, 179, 8, 0.15);
+  --warning-border: rgba(234, 179, 8, 0.3);
+
+  --error: #f87171;
+  --error-bg: rgba(239, 68, 68, 0.15);
+  --error-border: rgba(239, 68, 68, 0.3);
+
+  --info: #38bdf8;
+  --info-bg: rgba(56, 189, 248, 0.15);
+  --info-border: rgba(56, 189, 248, 0.3);
+
+  --purple: #c084fc;
+  --purple-bg: rgba(168, 85, 247, 0.15);
+  --purple-border: rgba(168, 85, 247, 0.3);
+
+  --input-bg: #090d16;
+  --input-bg-hover: #0f172a;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 }
 
-/* ---------- Gold Dark ---------- */
-[data-theme="dark"] {
-  --bg-primary: #1B1B18;
-  --bg-secondary: #252420;
-  --text-primary: #E8E5E0;
-  --text-secondary: #9E9D98;
-  --accent: #D4A84B;
-  --accent-hover: #E0B85E;
-  --accent-light: rgba(212, 168, 75, 0.12);
-  --border: #3A3835;
-  --success: #4CAF6E;
-  --error: #E05555;
-  --warning: #D4A84B;
-  --input-bg: #2A2926;
-  --input-bg-hover: #302F2B;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --accent-shadow: rgba(212, 168, 75, 0.25);
-  --accent-shadow-strong: rgba(212, 168, 75, 0.35);
-  --info-bg: rgba(212, 168, 75, 0.12);
-  --info-text: #E0B85E;
-  --info-border: rgba(212, 168, 75, 0.25);
-  --tooltip-border: rgba(212, 168, 75, 0.2);
-  --troubleshoot-bg: rgba(212, 168, 75, 0.06);
-}
+/* ---------- 2. Clean Modern Light Theme ---------- */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #ffffff;
 
-/* ---------- Teal Light ---------- */
-[data-scheme="teal"] {
-  --accent: #0D9488;
-  --accent-hover: #0B7C72;
-  --accent-light: rgba(13, 148, 136, 0.08);
-  --warning: #0D9488;
-  --accent-shadow: rgba(13, 148, 136, 0.25);
-  --accent-shadow-strong: rgba(13, 148, 136, 0.35);
-  --info-bg: #E6F5F3;
-  --info-text: #076E64;
-  --info-border: #A7DDD7;
-  --tooltip-border: rgba(45, 212, 191, 0.2);
-  --troubleshoot-bg: rgba(13, 148, 136, 0.05);
-}
+  --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --border-focus: #4f46e5;
 
-/* ---------- Teal Dark ---------- */
-[data-scheme="teal"][data-theme="dark"] {
-  --accent: #2DD4BF;
-  --accent-hover: #5EEAD4;
-  --accent-light: rgba(45, 212, 191, 0.12);
-  --warning: #2DD4BF;
-  --accent-shadow: rgba(45, 212, 191, 0.25);
-  --accent-shadow-strong: rgba(45, 212, 191, 0.35);
-  --info-bg: rgba(45, 212, 191, 0.12);
-  --info-text: #5EEAD4;
-  --info-border: rgba(45, 212, 191, 0.25);
-  --tooltip-border: rgba(45, 212, 191, 0.2);
-  --troubleshoot-bg: rgba(45, 212, 191, 0.06);
-}
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
 
-/* ---------- Blue Light ---------- */
-[data-scheme="blue"] {
-  --accent: #4F6AF0;
-  --accent-hover: #3B55DC;
-  --accent-light: rgba(79, 106, 240, 0.08);
-  --warning: #4F6AF0;
-  --accent-shadow: rgba(79, 106, 240, 0.25);
-  --accent-shadow-strong: rgba(79, 106, 240, 0.35);
-  --info-bg: #EBF0FE;
-  --info-text: #2C4AC9;
-  --info-border: #B3C4F9;
-  --tooltip-border: rgba(107, 131, 247, 0.2);
-  --troubleshoot-bg: rgba(79, 106, 240, 0.05);
-}
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-light: rgba(79, 70, 229, 0.1);
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #6366f1);
+  --accent-shadow: rgba(79, 70, 229, 0.25);
 
-/* ---------- Blue Dark ---------- */
-[data-scheme="blue"][data-theme="dark"] {
-  --accent: #6B83F7;
-  --accent-hover: #8DA0FF;
-  --accent-light: rgba(107, 131, 247, 0.12);
-  --warning: #6B83F7;
-  --accent-shadow: rgba(107, 131, 247, 0.25);
-  --accent-shadow-strong: rgba(107, 131, 247, 0.35);
-  --info-bg: rgba(107, 131, 247, 0.12);
-  --info-text: #8DA0FF;
-  --info-border: rgba(107, 131, 247, 0.25);
-  --tooltip-border: rgba(107, 131, 247, 0.2);
-  --troubleshoot-bg: rgba(107, 131, 247, 0.06);
-}
+  --success: #16a34a;
+  --success-bg: rgba(22, 163, 74, 0.1);
+  --success-border: rgba(22, 163, 74, 0.25);
 
-/* ---------- Slate Light ---------- */
-[data-scheme="slate"] {
-  --accent: #475569;
-  --accent-hover: #334155;
-  --accent-light: rgba(71, 85, 105, 0.08);
-  --warning: #475569;
-  --accent-shadow: rgba(71, 85, 105, 0.25);
-  --accent-shadow-strong: rgba(71, 85, 105, 0.35);
-  --info-bg: #F1F5F9;
-  --info-text: #334155;
-  --info-border: #CBD5E1;
-  --tooltip-border: rgba(148, 163, 184, 0.2);
-  --troubleshoot-bg: rgba(71, 85, 105, 0.05);
-}
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.1);
+  --warning-border: rgba(217, 119, 6, 0.25);
 
-/* ---------- Slate Dark ---------- */
-[data-scheme="slate"][data-theme="dark"] {
-  --accent: #94A3B8;
-  --accent-hover: #B0BDD0;
-  --accent-light: rgba(148, 163, 184, 0.12);
-  --warning: #94A3B8;
-  --accent-shadow: rgba(148, 163, 184, 0.25);
-  --accent-shadow-strong: rgba(148, 163, 184, 0.35);
-  --info-bg: rgba(148, 163, 184, 0.12);
-  --info-text: #B0BDD0;
-  --info-border: rgba(148, 163, 184, 0.25);
-  --tooltip-border: rgba(148, 163, 184, 0.2);
-  --troubleshoot-bg: rgba(148, 163, 184, 0.06);
+  --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.1);
+  --error-border: rgba(220, 38, 38, 0.25);
+
+  --info: #0284c7;
+  --info-bg: rgba(2, 132, 199, 0.1);
+  --info-border: rgba(2, 132, 199, 0.25);
+
+  --purple: #7c3aed;
+  --purple-bg: rgba(124, 58, 237, 0.1);
+  --purple-border: rgba(124, 58, 237, 0.25);
+
+  --input-bg: #f8fafc;
+  --input-bg-hover: #ffffff;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }

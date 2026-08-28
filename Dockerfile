@@ -1,49 +1,54 @@
-# WebSocket server builder stage
+# Multi-stage build for AutoSSH Tunnel Manager (Pure Go SSH Engine)
 ARG REGISTRY_MIRROR=docker.io
-FROM ${REGISTRY_MIRROR}/library/golang:1.24-alpine AS ws-builder
+FROM ${REGISTRY_MIRROR}/library/golang:1.24-alpine AS builder
+
 ARG GOPROXY
 WORKDIR /app
-COPY ws-server .
-RUN rm -f go.mod go.sum && \
-    if [ -n "$GOPROXY" ]; then export GOPROXY="$GOPROXY"; fi && \
-    go mod init ws-server && go mod tidy && go mod download
-RUN GOMAXPROCS=1 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o ws-server .
 
-# Use an official lightweight Linux image
+# Cache dependencies
+COPY go.mod go.sum ./
+RUN if [ -n "$GOPROXY" ]; then export GOPROXY="$GOPROXY"; fi && \
+    go mod download
+
+# Copy source code
+COPY main.go ./
+COPY internal/ ./internal/
+
+# Build static binary
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o autossh-server .
+
+# Production runtime stage (Minimal lightweight Alpine)
 FROM ${REGISTRY_MIRROR}/library/alpine:3.22.0 AS base
 
-ARG VERSION=dev
+ARG VERSION=latest
 
-# install dependencies
+# Install minimal runtime dependencies: su-exec, ca-certificates, tzdata
 RUN apk add --no-cache \
-    autossh \
-    flock \
-    inotify-tools \
-    netcat-openbsd \
-    socat \
-    su-exec
+    su-exec \
+    ca-certificates \
+    tzdata
 
-# create user and group
+# Create non-root user and group
 RUN addgroup -g 1000 mygroup && \
     adduser -D -u 1000 -G mygroup myuser
 
-# copy scripts and setup permssions
-COPY autossh-cli /usr/local/bin/autossh-cli
-COPY scripts /usr/local/bin/scripts
-COPY spinoff_monitor.sh /usr/local/bin/spinoff_monitor.sh
-COPY entrypoint.sh /entrypoint.sh
-COPY --from=ws-builder /app/ws-server /usr/local/bin/ws-server
+# Setup directories
+WORKDIR /app
+RUN mkdir -p /etc/autossh/config /tmp/autossh-logs /home/myuser/.ssh && \
+    chown -R myuser:mygroup /app /etc/autossh /tmp/autossh-logs /home/myuser
 
-RUN chmod +x /usr/local/bin/autossh-cli \
-    /usr/local/bin/spinoff_monitor.sh \
-    /usr/local/bin/ws-server \
-    /usr/local/bin/scripts/*.sh \
+# Copy built server binary and web assets
+COPY --from=builder /app/autossh-server /usr/local/bin/autossh-server
+COPY web/static /app/web/static
+COPY web/templates /app/web/templates
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /usr/local/bin/autossh-server \
     /entrypoint.sh
 
 RUN echo "$VERSION" > /etc/autossh-version
 
-# Set the entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE 8080
 
-# Set the default command
-CMD ["/usr/local/bin/spinoff_monitor.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/local/bin/autossh-server"]

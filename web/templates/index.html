@@ -1,143 +1,435 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="app.title">SSH Tunnel Config</title>
+    <title data-i18n="app.title">SSH Tunnel Manager</title>
     <link href="/static/vendor/fonts/material-icons.css" rel="stylesheet">
     <link href="/static/vendor/fonts/roboto.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/themes.css">
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/tooltip.css">
     <link rel="stylesheet" href="/static/vendor/xterm/xterm.css">
-    <link rel="stylesheet" href="/static/terminal.css">
-
+    <script src="/static/vendor/tailwind.min.js"></script>
     <script>
-        window.PROJECT_CONFIG = {
-            dockerHubUrl: 'https://hub.docker.com/r/oaklight/autossh-tunnel',
-            githubUrl: 'https://github.com/Oaklight/autossh-tunnel-dockerized',
-            projectName: 'SSH Tunnel Manager'
-        };
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            750: '#243044',
+                            850: '#172033',
+                            950: '#0b1120',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+                        mono: ['Menlo', 'Monaco', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
     </script>
-
-    <!-- Theme/scheme initialization (prevent flash) -->
+    <script src="/static/i18n.js"></script>
     <script src="/static/theme-switcher.js"></script>
 </head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200" data-page-title="app.title">
 
-<body data-page-title="app.title">
-    <!-- Header -->
-    <header class="site-header">
-        <div class="header-left">
-            <i class="material-icons">compare_arrows</i>
-            <span class="header-title" data-i18n="app.name">SSH Tunnel Manager</span>
-        </div>
-        <div class="header-right">
-            <!-- Theme toggle -->
-            <button class="header-icon theme-toggle" id="themeToggle" data-i18n-tooltip="navigation.theme">
-                <i class="material-icons">light_mode</i>
-            </button>
-            <!-- Scheme picker -->
-            <div class="scheme-wrapper">
-                <button class="header-icon scheme-toggle" id="schemeToggle"
-                        data-i18n-tooltip="navigation.color_scheme">
-                    <i class="material-icons">palette</i>
-                </button>
-                <div class="scheme-dropdown" id="schemeDropdown"></div>
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm shadow-indigo-500/20">
+                    <i class="material-icons text-xl">compare_arrows</i>
+                </div>
+                <span class="font-bold text-base tracking-tight text-slate-900 dark:text-white" data-i18n="app.name">SSH Tunnel Manager</span>
             </div>
-            <!-- Language toggle -->
-            <div class="lang-wrapper">
-                <button class="header-icon language-toggle" id="languageToggle" data-tooltip="dynamic">
-                    <i class="material-icons">language</i>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <!-- Language Single-click Toggle -->
+                <button class="h-9 px-2.5 rounded-xl flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-medium" id="languageToggle" data-i18n-title="navigation.switch_language" title="切换语言">
+                    <span class="text-xs font-bold tracking-wider flex items-center gap-1">🇺🇸 EN</span>
                 </button>
-                <div class="language-dropdown" id="languageDropdown"></div>
+
+                <!-- YAML Editor -->
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" id="btnEditYAML" data-i18n-title="modals.yaml_editor" title="在线编辑 YAML 配置">
+                    <i class="material-icons text-xl">code</i>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" id="themeToggle" data-i18n-title="navigation.theme" title="切换深色/浅色主题">
+                    <i class="material-icons text-xl">light_mode</i>
+                </button>
+
+                <!-- Change Password -->
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" id="btnChangePassword" data-i18n-title="modals.change_password" title="修改管理员密码">
+                    <i class="material-icons text-xl">key</i>
+                </button>
+
+                <!-- Logout -->
+                <button class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all" id="btnLogout" data-i18n-title="messages.confirm_logout" title="退出登录">
+                    <i class="material-icons text-xl">logout</i>
+                </button>
+
+                <!-- Help -->
+                <a href="/help" class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-i18n-title="navigation.help" title="帮助文档">
+                    <i class="material-icons text-xl">help_outline</i>
+                </a>
             </div>
-            <a href="/help" class="header-icon" data-i18n-tooltip="navigation.help">
-                <i class="material-icons">help_outline</i>
-            </a>
-            <a href="#" id="dockerhub-link" target="_blank" class="header-icon"
-                data-i18n-tooltip="navigation.docker_hub">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.186.186 0 00-.186.185v1.888c0 .102.084.185.186.185m0 2.716h2.118a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.186.186 0 00-.186.185v1.887c0 .102.084.186.186.186m-2.93 0h2.12a.186.186 0 00.185-.186V6.29a.186.186 0 00-.185-.185H8.1a.186.186 0 00-.186.185v1.887c0 .102.084.186.186.186m-2.964 0h2.119a.186.186 0 00.186-.186V6.29a.186.186 0 00-.186-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.186.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.93 0h2.12a.186.186 0 00.185-.185V9.006a.186.186 0 00-.185-.186H8.1a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.964 0h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186H5.136a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338 0-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983 0 1.97-.084 2.943-.25 1.225-.208 2.42-.598 3.554-1.146 1.147-.563 2.215-1.291 3.168-2.168.814-.75 1.518-1.607 2.05-2.553.404-.719.71-1.482.918-2.273a4.4 4.4 0 001.372.22c1.109 0 2.179-.536 2.717-1.36.189-.292.33-.609.415-.943l.034-.14-.079-.106z" />
-                </svg>
-            </a>
-            <a href="#" id="github-link" target="_blank" class="header-icon"
-                data-i18n-tooltip="navigation.github">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                </svg>
-            </a>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main>
-        <div class="container">
-            <!-- Data Table Card -->
-            <div class="card">
-                <div class="table-wrapper">
-                    <table class="data-table" id="tunnelTable">
-                        <thead>
-                            <tr>
-                                <th data-i18n="table.headers.controls">Controls</th>
-                                <th data-i18n="table.headers.name">Name</th>
-                                <th data-i18n="table.headers.status">Status</th>
-                                <th data-i18n="table.headers.remote_host">Remote Host</th>
-                                <th data-i18n="table.headers.remote_port">Remote Port</th>
-                                <th data-i18n="table.headers.local_port">Local Port</th>
-                                <th title="Direction" data-i18n-title="tooltips.direction">
-                                    <i class="material-icons" style="font-size:18px; vertical-align:middle;">swap_horiz</i>
-                                </th>
-                                <th title="Actions" data-i18n-title="tooltips.actions">
-                                    <i class="material-icons" style="font-size:18px; vertical-align:middle;">settings</i>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Rows dynamically added -->
-                        </tbody>
-                    </table>
-                </div>
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Dashboard Stats 5-Cards Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
+            <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center">
+                <div class="text-xs font-medium text-slate-500 dark:text-slate-400" data-i18n="stats.total">总隧道数</div>
+                <div id="statTotal" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">0</div>
             </div>
+            <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center">
+                <div class="text-xs font-medium text-emerald-600 dark:text-emerald-400" data-i18n="stats.healthy">健康运行</div>
+                <div id="statActive" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center">
+                <div class="text-xs font-medium text-amber-600 dark:text-amber-400" data-i18n="stats.degraded">端口异常</div>
+                <div id="statDegraded" class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">0</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center">
+                <div class="text-xs font-medium text-rose-600 dark:text-rose-400" data-i18n="stats.failed">失败/重试</div>
+                <div id="statFailed" class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">0</div>
+            </div>
+            <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-center">
+                <div class="text-xs font-medium text-slate-500 dark:text-slate-400" data-i18n="stats.stopped">已停止</div>
+                <div id="statStopped" class="text-2xl font-bold text-slate-500 dark:text-slate-400 mt-1">0</div>
+            </div>
+        </div>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <div class="action-buttons-left">
-                    <button class="btn btn-primary" id="addRow" title="Add Tunnel"
-                        data-i18n-title="tooltips.add_tunnel">
-                        <i class="material-icons">add</i>
-                        <span data-i18n="buttons.add">Add</span>
-                    </button>
-                    <button class="btn btn-warning" id="saveConfig"
-                        title="Save Configuration and Restart" data-i18n-title="tooltips.save_config">
-                        <i class="material-icons">save</i>
-                        <span data-i18n="buttons.save_restart">Save & Restart</span>
-                    </button>
-                </div>
-                <div class="action-buttons-right">
-                    <button class="btn btn-secondary" id="refreshStatus" title="Refresh Status"
-                        data-i18n-title="tooltips.refresh_status">
-                        <i class="material-icons">refresh</i>
-                        <span data-i18n="buttons.refresh">Refresh</span>
-                    </button>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="autoRefresh">
-                        <span class="toggle-switch-label" data-i18n="buttons.auto_refresh">Auto Refresh</span>
-                    </label>
-                </div>
+        <!-- Action Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button id="btnOpenAddModal" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 active:scale-[0.98] transition-all">
+                    <i class="material-icons text-base">add</i> <span data-i18n="buttons.add">添加隧道</span>
+                </button>
+                <button id="btnStartAll" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl shadow-sm active:scale-[0.98] transition-all">
+                    <i class="material-icons text-base text-emerald-500">play_arrow</i> <span data-i18n="buttons.start_all">全部启动</span>
+                </button>
+                <button id="btnStopAll" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl shadow-sm active:scale-[0.98] transition-all">
+                    <i class="material-icons text-base text-rose-500">stop</i> <span data-i18n="buttons.stop_all">全部停止</span>
+                </button>
+            </div>
+            <div>
+                <button id="btnRefresh" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl shadow-sm active:scale-[0.98] transition-all">
+                    <i class="material-icons text-base text-indigo-500">refresh</i> <span data-i18n="buttons.refresh">刷新状态</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tunnels Data Table Card -->
+        <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="tunnelTable">
+                    <thead>
+                        <tr class="bg-slate-50/80 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-700/60 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <th class="py-3 px-4 w-12 text-center" data-i18n="table.headers.controls">开关</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.name">隧道名称</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.status">状态 & 诊断</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.direction">转发方向</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.remote_host">远程地址</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.local_port">本地端口</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.auth">认证方式</th>
+                            <th class="py-3 px-4" data-i18n="table.headers.performance">延迟 / 流量</th>
+                            <th class="py-3 px-4 text-right" data-i18n="table.headers.actions">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tunnelTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-xs sm:text-sm">
+                        <tr><td colspan="9" class="text-center py-12 text-slate-400">加载中...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
 
-    <!-- Scripts -->
+    <!-- 1. Add / Edit Tunnel Modal -->
+    <div id="tunnelModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100">
+            <!-- Modal Fixed Top Header -->
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between flex-shrink-0 bg-white dark:bg-slate-850">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" id="tunnelModalTitle" data-i18n="modals.add_tunnel">添加 SSH 隧道</h3>
+                <button id="btnCloseTunnelModal" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-750 transition-all" data-i18n-title="buttons.close" title="关闭 (Esc)">
+                    <i class="material-icons text-xl">close</i>
+                </button>
+            </div>
+
+            <!-- Form Container -->
+            <form id="tunnelForm" class="flex flex-col flex-1 overflow-hidden">
+                <input type="hidden" id="formHash" value="">
+
+                <!-- Modal Scrollable Body Content -->
+                <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                    <!-- Section: Basic -->
+                    <div class="pb-1 border-b border-dashed border-slate-200 dark:border-slate-700 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider" data-i18n="form.sections.basic">
+                        基础配置
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.name">隧道名称</label>
+                            <input type="text" id="formName" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="web-prod-tunnel">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.direction">转发方向</label>
+                            <select id="formDirection" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all">
+                                <option value="remote_to_local" data-i18n="form.direction_r2l">远程到本地 (-L)</option>
+                                <option value="local_to_remote" data-i18n="form.direction_l2r">本地到远程 (-R)</option>
+                                <option value="dynamic_socks5" data-i18n="form.direction_socks5">动态 SOCKS5 代理 (-D)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.remote_host">远程主机 *</label>
+                            <input type="text" id="formRemoteHost" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="user@remote.server.com" required>
+                            <span class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 block" data-i18n="form.remote_host_tip">支持 user@host 或 ~/.ssh/config 别名</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.remote_port">远程端口</label>
+                            <input type="text" id="formRemotePort" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="8080">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.local_port">本地端口 *</label>
+                            <input type="text" id="formLocalPort" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="8080" required>
+                        </div>
+                    </div>
+
+                    <!-- Section: Auth -->
+                    <div class="pt-2 pb-1 border-b border-dashed border-slate-200 dark:border-slate-700 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider" data-i18n="form.sections.auth">
+                        认证方式配置
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.auth_type">认证类型</label>
+                        <select id="formAuthType" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all">
+                            <option value="key" data-i18n="form.auth_key">SSH 密钥认证</option>
+                            <option value="password" data-i18n="form.auth_password">SSH 密码认证</option>
+                            <option value="interactive" data-i18n="form.auth_interactive">2FA / 键盘交互式认证</option>
+                        </select>
+                    </div>
+
+                    <!-- Key Auth Box -->
+                    <div id="authKeyFields">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            <span data-i18n="form.private_key_label">私钥输入</span> <span class="text-slate-400 font-normal" data-i18n="form.private_key_sublabel">(直接粘贴私钥文本，自动落盘受保护文件，不回显明文)</span>
+                        </label>
+                        <textarea id="formPrivateKeyContent" rows="3" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."></textarea>
+                        <div id="keyStatusNotice" class="hidden text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium flex items-center gap-1">
+                            <i class="material-icons text-sm">check_circle</i> <span data-i18n="form.key_saved_notice">已保存私钥。可粘贴新私钥直接覆盖。</span>
+                        </div>
+                    </div>
+
+                    <!-- Password Auth Box -->
+                    <div id="authPasswordFields" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.password_label">SSH 登录密码</label>
+                            <input type="password" id="formPassword" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="••••••••">
+                            <div id="passStatusNotice" class="hidden text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium flex items-center gap-1">
+                                <i class="material-icons text-sm">check_circle</i> <span data-i18n="form.password_saved_notice">已配置密码。留空表示保持不变。</span>
+                            </div>
+                        </div>
+                        <div id="authPasswordEnvFields">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.password_env_label">或指定密码环境变量名</label>
+                            <input type="text" id="formPasswordEnv" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="REMOTE_SSH_PASS">
+                        </div>
+                    </div>
+
+                    <!-- Interactive Auth Notice -->
+                    <div id="authInteractiveNotice" class="hidden p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 text-xs flex items-center gap-2">
+                        <i class="material-icons text-base">info</i> <span data-i18n="form.interactive_notice">交互式隧道需在页面通过“终端”手动输入一次性 2FA 验证码或临时密码。</span>
+                    </div>
+
+                    <!-- Pre-flight Test Connection Button -->
+                    <div>
+                        <button type="button" id="btnTestConnection" class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-all">
+                            <i class="material-icons text-base text-indigo-500">speed</i> <span data-i18n="form.test_connection">测试连接</span>
+                        </button>
+                        <div id="testConnectionResult" class="hidden mt-2 p-3 rounded-xl text-xs"></div>
+                    </div>
+
+                    <!-- Section: Advanced -->
+                    <div class="pt-2 pb-1 border-b border-dashed border-slate-200 dark:border-slate-700 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider" data-i18n="form.sections.advanced">
+                        高级 SSH 选项
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.ssh_port">SSH 端口</label>
+                            <input type="number" id="formSSHPort" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="22">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.connect_timeout">连接超时秒数</label>
+                            <input type="number" id="formConnectTimeout" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="10">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.alive_interval">心跳保活间隔 (秒)</label>
+                            <input type="number" id="formServerAliveInterval" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="30">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.hostkey_policy">主机指纹策略</label>
+                            <select id="formStrictHostKey" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all">
+                                <option value="accept-new" data-i18n="form.hostkey_accept_new">自动信任首次指纹 (accept-new)</option>
+                                <option value="no" data-i18n="form.hostkey_no">禁用指纹校验 (no)</option>
+                                <option value="yes" data-i18n="form.hostkey_yes">严格校验 known_hosts (yes)</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.proxy_jump">跳板机代理</label>
+                            <input type="text" id="formProxyJump" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="jumpuser@jumphost:22">
+                        </div>
+                    </div>
+
+                    <!-- Section: Health & Retry -->
+                    <div class="pt-2 pb-1 border-b border-dashed border-slate-200 dark:border-slate-700 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider" data-i18n="form.sections.health_retry">
+                        健康检测与自动重试策略
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="formAutoRestart" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
+                            <label for="formAutoRestart" class="text-xs text-slate-700 dark:text-slate-300 cursor-pointer" data-i18n="form.auto_restart">断开时自动重试拉起</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="formHealthCheckEnabled" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
+                            <label for="formHealthCheckEnabled" class="text-xs text-slate-700 dark:text-slate-300 cursor-pointer" data-i18n="form.health_check">开启心跳健康探测</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.max_retries">最大重试次数</label>
+                            <input type="number" id="formMaxRetries" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="10">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="form.retry_interval">初始重试退避间隔 (秒)</label>
+                            <input type="number" id="formRetryInterval" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" placeholder="5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Fixed Bottom Actions Footer -->
+                <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-end gap-2.5 flex-shrink-0">
+                    <button type="button" id="btnCancelTunnelModal" class="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-xl transition-all" data-i18n="buttons.cancel">
+                        取消
+                    </button>
+                    <button type="submit" id="btnSaveTunnel" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 active:scale-[0.98] transition-all" data-i18n="buttons.save_apply">
+                        保存并应用
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. YAML Online Editor Modal -->
+    <div id="yamlModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between flex-shrink-0 bg-white dark:bg-slate-850">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="modals.yaml_editor">在线编辑 config.yaml</h3>
+                <button id="btnCloseYamlModal" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-750 transition-all" data-i18n-title="buttons.close" title="关闭 (Esc)">
+                    <i class="material-icons text-xl">close</i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 space-y-3">
+                <div id="yamlErrorNotice" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium"></div>
+                <textarea id="yamlEditorArea" rows="16" class="w-full p-4 bg-slate-950 text-slate-100 font-mono text-xs rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"></textarea>
+            </div>
+
+            <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-end gap-2.5 flex-shrink-0">
+                <button id="btnCancelYamlModal" class="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-xl transition-all" data-i18n="buttons.cancel">
+                    取消
+                </button>
+                <button id="btnSaveYaml" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 active:scale-[0.98] transition-all" data-i18n="buttons.save_yaml">
+                    保存 YAML 并重载
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Terminal Modal -->
+    <div id="terminalModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-100">
+            <div class="px-6 py-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950 flex-shrink-0">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2" id="terminalTitle" data-i18n="modals.terminal">
+                    <i class="material-icons text-purple-400 text-base">terminal</i> 交互式终端
+                </h3>
+                <button id="btnCloseTerminalModal" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all" data-i18n-title="buttons.close" title="关闭 (Esc)">
+                    <i class="material-icons text-xl">close</i>
+                </button>
+            </div>
+            <div class="p-3 bg-slate-950 flex-1 overflow-hidden">
+                <div id="terminalContainer" class="w-full h-96 rounded-xl overflow-hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Change Password Modal -->
+    <div id="passwordModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden text-slate-900 dark:text-slate-100 flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-850 flex-shrink-0">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="modals.change_password">修改管理员密码</h3>
+                <button id="btnClosePasswordModal" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-750 transition-all" data-i18n-title="buttons.close" title="关闭 (Esc)">
+                    <i class="material-icons text-xl">close</i>
+                </button>
+            </div>
+            <form id="passwordForm" class="flex flex-col flex-1">
+                <div class="p-6 space-y-3.5 flex-1">
+                    <div id="passwordErrorNotice" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium"></div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="modals.old_password">原密码</label>
+                        <input type="password" id="oldPass" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="modals.new_password">新密码</label>
+                        <input type="password" id="newPass" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" required minlength="6">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-i18n="modals.confirm_password">确认新密码</label>
+                        <input type="password" id="confirmPass" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all" required minlength="6">
+                    </div>
+                </div>
+                <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-end gap-2.5 flex-shrink-0">
+                    <button type="button" id="btnCancelPasswordModal" class="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-xl transition-all" data-i18n="buttons.cancel">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 active:scale-[0.98] transition-all" data-i18n="buttons.save_password">
+                        保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Diagnostic Details Drawer / Modal -->
+    <div id="diagModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-850 flex-shrink-0">
+                <h3 class="text-base font-bold text-slate-900 dark:text-white" id="diagTitle" data-i18n="modals.diagnostics">隧道诊断分析</h3>
+                <button id="btnCloseDiagModal" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-750 transition-all" data-i18n-title="buttons.close" title="关闭 (Esc)">
+                    <i class="material-icons text-xl">close</i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                <div id="diagContent"></div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" data-i18n="modals.recent_logs">最近运行日志：</label>
+                    <div id="diagLogs" class="p-3.5 bg-slate-950 text-slate-300 font-mono text-xs rounded-xl border border-slate-800 max-h-60 overflow-y-auto whitespace-pre-wrap break-all"></div>
+                </div>
+            </div>
+            <div class="px-6 py-3.5 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-end flex-shrink-0">
+                <button id="btnCloseDiagBtn" class="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-xl transition-all" data-i18n="buttons.close">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Scripts -->
     <script src="/static/vendor/xterm/xterm.js"></script>
     <script src="/static/vendor/xterm/xterm-addon-fit.js"></script>
-    <script src="/static/terminal.js?v=3"></script>
-    <script src="/static/i18n.js?v=3"></script>
-    <script src="/static/tooltip.js?v=3"></script>
-    <script src="/static/script.js?v=3"></script>
+    <!-- Core App Script -->
+    <script src="/static/script.js"></script>
 </body>
-
 </html>

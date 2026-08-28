@@ -1,361 +1,148 @@
-# SSH Tunnel Manager with Docker and Autossh
+# SSH Tunnel Manager
 
-[![Docker - autossh-tunnel](https://img.shields.io/docker/v/oaklight/autossh-tunnel?sort=semver&label=autossh-tunnel&color=green)](https://hub.docker.com/r/oaklight/autossh-tunnel)
-[![Docker - autossh-tunnel-web-panel](https://img.shields.io/docker/v/oaklight/autossh-tunnel-web-panel?sort=semver&label=autossh-tunnel-web-panel&color=green)](https://hub.docker.com/r/oaklight/autossh-tunnel-web-panel)
+[![GitHub Container Registry](https://img.shields.io/badge/docker-ghcr.io%2Ffansys%2Fautossh--tunnel-blue?logo=docker)](https://github.com/fansys/autossh-tunnel/pkgs/container/autossh-tunnel)
+[![Go Report Card](https://img.shields.io/badge/go-1.24-blue?logo=go)](https://golang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?logo=tailwind-css)](https://tailwindcss.com)
 
 [中文版](README_zh.md) | [English](README_en.md)
 
-![Web Panel Interface](https://github.com/user-attachments/assets/bb26d0f5-14ee-4289-b809-e48381c05bc1)
-
-This project provides a Docker-based solution to manage SSH tunnels using `autossh` and a YAML configuration file. This setup allows you to easily expose **local services to a remote server through an SSH tunnel** or **map remote services to a local port**, making it convenient to access services behind a firewall.
-
-## Features
-
-- **Dockerized**: Environment encapsulated with Docker, making it easy to deploy and manage.
-- **Non-root User**: Run container as a non-root user to enhance security.
-- **YAML Configuration**: Define multiple SSH tunnel mappings using the `config.yaml` file and support automatic service reload upon configuration changes.
-- **Autossh**: Automatically maintain SSH connection to ensure tunnels remain active.
-- **Dynamic UID/GID Support**: Set container user's UID and GID dynamically using `PUID` and `PGID` environment variables to match host user permissions.
-- **Multi-architecture Support**: Supports all Alpine base architectures, including `linux/amd64`, `linux/arm64/v8`, `linux/arm/v7`, `linux/arm/v6`, `linux/386`, `linux/ppc64le`, `linux/s390x`, and `linux/riscv64`.
-- **Flexible Direction Configuration**: Support exposing local services to a remote server (`local_to_remote`) or mapping remote services to a local port (`remote_to_local`).
-- **Automatic Reload**: Detect changes in `config.yaml` and automatically reload the service configuration.
-- **Web-Based Configuration**: Manage tunnels and configuration updates via a web panel.
-- **CLI Tool (autossh-cli)**: Command-line interface for managing tunnels, viewing status, and controlling individual tunnels.
-- **HTTP API**: RESTful API for programmatic tunnel control, enabling integration with other tools and automation.
-- **Individual Tunnel Control**: Start, stop, and manage each tunnel independently without affecting others.
-
-## Prerequisites
-
-- Docker and Docker Compose are installed on the local machine.
-- SSH keys are set up for accessing the remote host.
-
-## Quick Links
-
-- [Full Documentation (English)](https://oaklight.github.io/autossh-tunnel-dockerized/en/)
-- [Full Documentation (中文)](https://oaklight.github.io/autossh-tunnel-dockerized/zh/)
-
-## Releases
-
-The packaged Docker images are available on Docker Hub:
-
-[Docker Hub Link](https://hub.docker.com/r/oaklight/autossh-tunnel)
-
-Feel free to use it and provide feedback!
-
-## Quick Start
-
-### 1. Download Required Files
-
-For most users, you only need to download the Docker Compose file.
-
-**Option A: Download files directly**
-
-Create a new directory and download the required files:
-
-```bash
-mkdir autossh-tunnel
-cd autossh-tunnel
-
-# Download docker-compose.yaml (includes both autossh tunnel and web panel services)
-curl -O https://oaklight.github.io/autossh-tunnel-dockerized/compose.yaml
-
-# Create config directory
-mkdir config
-
-# Option 1: Download sample config (if you want to configure manually)
-curl -o config/config.yaml.sample https://oaklight.github.io/autossh-tunnel-dockerized/config/config.yaml.sample
-cp config/config.yaml.sample config/config.yaml
-
-# Option 2: Create empty config (if you want to use web panel for configuration)
-touch config/config.yaml
-```
-
-> **Note**: The `compose.yaml` file includes both the autossh tunnel service and the web panel service. The web panel is optional - you can disable it by commenting out the `web` service section in the compose file if you prefer manual configuration.
-
-**Option B: Clone the repository (for developers)**
-
-If you want to modify the source code or build locally:
-
-```bash
-git clone https://github.com/Oaklight/autossh-tunnel-dockerized.git
-cd autossh-tunnel-dockerized
-```
-
-### 2. Configure SSH Keys
-
-Ensure your SSH keys are located in the `~/.ssh` directory. This directory should contain:
-
-- Private key files (e.g., `id_ed25519`, `id_rsa`)
-- SSH configuration file (`config`)
-- Known hosts file (`known_hosts`)
-
-> **Important**: This project heavily relies on the `~/.ssh/config` file for SSH connection configuration. The SSH config file allows you to define connection parameters such as hostnames, usernames, ports, and key files for each remote host. Without proper SSH config setup, the tunnels may fail to establish connections.
-
-For detailed SSH config file setup instructions, please refer to: [SSH Configuration Guide](README_ssh_config_en.md)
-
-### 3. Configure Tunnels
-
-You have two options for configuring your SSH tunnels:
-
-#### Option A: Manual Configuration
-
-Edit the `config/config.yaml` file to define your SSH tunnel mappings.
-
-**Basic Example:**
-
-```yaml
-tunnels:
-  # Expose local service to a remote server
-  - remote_host: "user@remote-host1"
-    remote_port: 22323
-    local_port: 18120
-    direction: local_to_remote
-    
-  # Map remote service to a local port
-  - remote_host: "user@remote-host2"
-    remote_port: 8000
-    local_port: 8001
-    direction: remote_to_local
-```
-
-**Advanced Configuration: Specifying Bind Addresses**
-
-If you want to bind the remote port or local service to a specific IP address, you can use the `ip:port` format:
-
-```yaml
-tunnels:
-  # Specify remote bind address
-  - remote_host: "user@remote-host1"
-    remote_port: "192.168.45.130:22323"  # Bind to specific IP on remote
-    local_port: 18120
-    direction: local_to_remote
-    
-  # Specify local bind address
-  - remote_host: "user@remote-host1"
-    remote_port: 22323
-    local_port: "192.168.1.100:18120"  # Bind to specific IP locally
-    direction: local_to_remote
-    
-  # Specify both remote and local bind addresses
-  - remote_host: "user@remote-host1"
-    remote_port: "192.168.45.130:22323"
-    local_port: "192.168.1.100:18120"
-    direction: local_to_remote
-```
-
-#### Option B: Web Panel Configuration
-
-If you're using the web panel (included in `compose.yaml`):
-
-1. Start with an empty `config/config.yaml` file
-2. Access the web interface at `http://localhost:5000` after starting the services
-3. Configure tunnels through the visual interface
-
-> **Tips**:
-> - The web panel automatically backs up your configuration to `config/backups/` every time you save changes
-> - You may need to manually delete old backup files to prevent disk space issues
-> - The `config/config.yaml` file must exist (even if empty) for the autossh tunnel service to work properly
-
-### 4. Configure User Permissions (PUID/PGID)
-
-Before running the containers, make sure to set the correct `PUID` and `PGID` values to match your host user's UID and GID.
-
-Check your user's UID and GID:
-
-```bash
-id
-```
-
-Setting methods:
-
-**Method 1: Set environment variables**
-
-```bash
-export PUID=$(id -u)
-export PGID=$(id -g)
-```
-
-**Method 2: Edit the compose.yaml file directly**
-
-```yaml
-environment:
-  - PUID=1000
-  - PGID=1000
-```
-
-### 5. Start Services
-
-#### Using Docker Hub Image
-
-```bash
-docker compose up -d
-```
-
-#### Build and Run Locally
-
-```bash
-# Build
-docker compose -f compose.dev.yaml build
-
-# Run
-docker compose -f compose.dev.yaml up -d
-```
-
-### 6. Verify Services
-
-Check container status:
-
-```bash
-docker compose ps
-```
-
-View logs:
-
-```bash
-docker compose logs -f
-```
-
-Access the Web panel (if enabled):
-
-```
-http://localhost:5000
-```
-
-## Tunnel Direction Modes
-
-The project supports two interpretation modes for tunnel direction configuration:
-
-### Default Mode (Service-Oriented)
-
-The default mode interprets direction from a **service exposure perspective**:
-
-- `local_to_remote`: Expose a **local** service **to remote** (uses SSH `-R`, remote listens)
-- `remote_to_local`: Bring a **remote** service **to local** (uses SSH `-L`, local listens)
-
-### SSH-Standard Mode
-
-The SSH-standard mode aligns with **SSH native terminology**:
-
-- `local_to_remote`: SSH Local forwarding (uses SSH `-L`, local listens)
-- `remote_to_local`: SSH Remote forwarding (uses SSH `-R`, remote listens)
-
-### Switching Modes
-
-Set the `TUNNEL_DIRECTION_MODE` environment variable in your `compose.yaml`:
-
-```yaml
-environment:
-  - TUNNEL_DIRECTION_MODE=default        # Default (current behavior)
-  # - TUNNEL_DIRECTION_MODE=ssh-standard # SSH-standard mode
-```
-
-> **Note**: The default mode maintains backward compatibility with existing configurations. Choose `ssh-standard` if you prefer SSH's native terminology.
-
-## Access Services
-
-Once the containers are running:
-
-- **Local to Remote tunnels** (default mode): Access local services via the specified port on the remote server (e.g., `remote-host1:22323`)
-- **Remote to Local tunnels** (default mode): Access remote services through the local port (e.g., `localhost:8001`)
-
-## Tunnel Control API
-
-The project provides both CLI and HTTP API interfaces for advanced tunnel management.
-
-### CLI Commands
-
-```bash
-# List all configured tunnels
-autossh-cli list
-
-# View tunnel running status
-autossh-cli status
-
-# Start a specific tunnel
-autossh-cli start-tunnel <hash>
-
-# Stop a specific tunnel
-autossh-cli stop-tunnel <hash>
-
-# Start all tunnels
-autossh-cli start
-
-# Stop all tunnels
-autossh-cli stop
-```
-
-### HTTP API Endpoints
-
-| Method | Endpoint        | Description                        |
-| ------ | --------------- | ---------------------------------- |
-| GET    | `/list`         | Get list of all configured tunnels |
-| GET    | `/status`       | Get running status of all tunnels  |
-| POST   | `/start`        | Start all tunnels                  |
-| POST   | `/stop`         | Stop all tunnels                   |
-| POST   | `/start/<hash>` | Start a specific tunnel            |
-| POST   | `/stop/<hash>`  | Stop a specific tunnel             |
-
-For detailed API documentation, see: [Tunnel Control API Documentation](https://oaklight.github.io/autossh-tunnel-dockerized/en/api/http-api/)
-
-## Security Considerations
-
-When enabling the `-R` parameter, remote ports are by default bound to `localhost`. If you want to access the tunnel via other IP addresses on the remote server, you need to enable the `GatewayPorts` option in the remote server's `sshd_config`:
-
-```bash
-# Edit /etc/ssh/sshd_config
-GatewayPorts clientspecified  # Allow clients to specify binding address
-GatewayPorts yes              # Or bind to all network interfaces
-```
-
-Restart the SSH service:
-
-```bash
-sudo systemctl restart sshd
-```
-
-Enabling `GatewayPorts` may expose services to the public. Ensure to take appropriate security measures, such as configuring firewall or enabling access control.
-
-## Troubleshooting
-
-### SSH Key Permissions
-
-Ensure the `.ssh` directory and its contents have the appropriate permissions:
-
-```bash
-chmod 700 .ssh
-chmod 600 .ssh/*
-```
-
-### Docker Permissions
-
-If you encounter permission issues when running Docker commands, make sure your user is in the `docker` group:
-
-```bash
-sudo usermod -aG docker $USER
-```
-
-### Logs
-
-Check Docker container logs for any errors:
-
-```bash
-docker compose logs -f
-```
-
-For more troubleshooting tips, see the [full documentation](https://oaklight.github.io/autossh-tunnel-dockerized/en/).
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [autossh](http://www.harding.motd.ca/autossh/) for maintaining SSH connections.
-- [Docker](https://www.docker.com/) for containerization.
-- [Alpine Linux](https://alpinelinux.org/) for the lightweight base image.
-- [Go](https://golang.org/) for the web panel backend.
-- [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) for the documentation theme.
+A modern, all-in-one SSH tunnel management system built with pure Go native SSH libraries and Tailwind CSS. Easily configure **Remote-to-Local (`-L`)**, **Local-to-Remote (`-R`)**, and **Dynamic SOCKS5 Proxy (`-D`)** tunnels via a declarative YAML file or a visual Web Console.
 
 ---
 
-Contributions to the project are welcome via issues or pull requests. Happy tunneling!
+## 🌟 Key Features
+
+- **All-in-One Single Container Architecture**: Web Console, REST API, WebSocket Terminal, and SSH tunnel engine consolidated into a single lightweight image.
+- **Pure Go Native SSH Engine**: Powered by `golang.org/x/crypto/ssh` — **zero dependencies on autossh, sshpass, or openssh binaries**, with minimal memory overhead per tunnel.
+- **Comprehensive Web Configuration Panel**: A sleek Slate/Light dashboard built with Tailwind CSS, supporting full configuration options (ports, keepalive, timeout, host key policies, ProxyJump, etc.).
+- **Versatile Authentication & Credential Security**:
+  - **Password Auth**: Native password login and environment variable referencing;
+  - **Write-Only Private Key Handling**: Paste private key text on the page to automatically store it securely (`0600` permissions), with **zero plaintext leakage in APIs or UI**;
+  - **2FA / Keyboard-Interactive Auth**: Built-in WebSocket terminal for manual one-time passcodes.
+- **Pre-flight Connection Testing & Smart Diagnostics**:
+  - Test connectivity in real-time before saving;
+  - Automatically identifies mismatched keys, password requirements, untrusted host keys, DNS failures, or port conflicts with actionable remediation suggestions.
+- **Multi-dimensional Monitoring & Real-time Metrics**:
+  - Live tracking of **RTT latency**, **transmitted/received data throughput (Tx/Rx)**, and **active connections**.
+- **Exponential Backoff Auto-Recovery**:
+  - Gracefully reconnects using exponential backoff on network interruptions;
+  - Accurately remembers running state: **only auto-starts tunnels that were active before container restart**.
+- **Stateless Persistent JWT Authentication**:
+  - Admin login with password modification support;
+  - Persistent JWT secret ensures **no re-login required across container restarts**.
+- **Instant Language Toggle**: Seamless one-click toggle between English and Simplified Chinese with offline static assets.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Using Docker Compose (Recommended)
+
+Create a `compose.yaml` file:
+
+```yaml
+services:
+  autossh:
+    image: ghcr.io/fansys/autossh-tunnel:latest
+    container_name: autossh-tunnel
+    volumes:
+      - ~/.ssh:/home/myuser/.ssh:ro
+      - ./config:/etc/autossh/config:rw
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=1000
+      - PGID=1000
+      - PORT=8080
+      # Initial Admin credentials (Default: admin / admin888)
+      - USERNAME=admin
+      - PASSWORD=admin888
+      # Optional: API Key for programmatic REST API access
+      # - API_KEY=your-secret-api-key
+    network_mode: "host"
+    restart: always
+```
+
+### 2. Start the Service
+
+```bash
+mkdir -p config
+docker compose up -d
+```
+
+Open your browser and visit `http://<YOUR_IP>:8080`, then log in with the admin credentials!
+
+---
+
+## 📖 Configuration Example (`config/config.yaml`)
+
+Configure tunnels visually in the Web Console or edit `config/config.yaml` directly:
+
+```yaml
+tunnels:
+  # Example 1: Basic SSH Key tunnel (Remote mapped to Local -L)
+  - name: "web-service"
+    remote_host: "user@remote-host1.com"
+    remote_port: "8000"
+    local_port: "8001"
+    direction: remote_to_local
+    enabled: true
+
+  # Example 2: Password-authenticated tunnel (Native Go SSH auto-reconnect)
+  - name: "database-tunnel"
+    remote_host: "root@remote-db.example.com"
+    remote_port: "3306"
+    local_port: "13306"
+    auth_type: password
+    password: "YourSecurePassword" # or use password_env: "REMOTE_DB_PASS"
+
+  # Example 3: Dynamic SOCKS5 proxy tunnel (-D local dynamic proxy)
+  - name: "dynamic-socks5-proxy"
+    remote_host: "user@gateway.example.com"
+    local_port: "1080"
+    direction: dynamic_socks5
+
+  # Example 4: Interactive 2FA tunnel (Enter one-time passcode via Web Terminal)
+  - name: "jumphost-2fa-tunnel"
+    remote_host: "user@jumphost.example.com"
+    remote_port: "22"
+    local_port: "2222"
+    direction: remote_to_local
+    interactive: true
+
+  # Example 5: Advanced options (Custom SSH options, keepalive, jump host, and backoff)
+  # - name: "advanced-production-tunnel"
+  #   remote_host: "deploy@prod.server.internal"
+  #   remote_port: "443"
+  #   local_port: "8443"
+  #   ssh_port: 2222
+  #   server_alive_interval: 15
+  #   connect_timeout: 8
+  #   strict_host_key_checking: "accept-new"
+  #   proxy_jump: "jumpuser@jumphost:22"
+  #   auto_restart: true
+  #   max_retries: 10
+  #   retry_interval: 5
+```
+
+---
+
+## 🛠️ Local Development & Build
+
+Standard Go toolchain with zero Node.js / npm dependencies:
+
+```bash
+# Run unit tests
+make test
+
+# Build local binary
+make build-local
+
+# Run locally
+make run
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
