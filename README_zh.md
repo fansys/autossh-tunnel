@@ -46,12 +46,9 @@ services:
     image: ghcr.io/fansys/autossh-tunnel:latest
     container_name: autossh-tunnel
     volumes:
-      - ~/.ssh:/home/myuser/.ssh:ro
       - ./config:/etc/autossh/config:rw
     environment:
       - TZ=Asia/Shanghai
-      - PUID=1000
-      - PGID=1000
       - PORT=8080
       # 初始管理员账号密码 (默认: admin / admin888)
       - USERNAME=admin

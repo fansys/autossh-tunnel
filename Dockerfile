@@ -13,8 +13,9 @@ RUN if [ -n "$GOPROXY" ]; then export GOPROXY="$GOPROXY"; fi && \
 # Copy source code
 COPY main.go ./
 COPY internal/ ./internal/
+COPY web/ ./web/
 
-# Build static binary
+# Build static binary with embedded assets
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o autossh-server .
 
 # Production runtime stage (Minimal lightweight Alpine)
@@ -22,33 +23,21 @@ FROM ${REGISTRY_MIRROR}/library/alpine:3.22.0 AS base
 
 ARG VERSION=latest
 
-# Install minimal runtime dependencies: su-exec, ca-certificates, tzdata
+# Install minimal runtime dependencies: ca-certificates, tzdata
 RUN apk add --no-cache \
-    su-exec \
     ca-certificates \
     tzdata
 
-# Create non-root user and group
-RUN addgroup -g 1000 mygroup && \
-    adduser -D -u 1000 -G mygroup myuser
-
-# Setup directories
 WORKDIR /app
-RUN mkdir -p /etc/autossh/config /tmp/autossh-logs /home/myuser/.ssh && \
-    chown -R myuser:mygroup /app /etc/autossh /tmp/autossh-logs /home/myuser
 
 # Copy built server binary and web assets
 COPY --from=builder /app/autossh-server /usr/local/bin/autossh-server
 COPY web/static /app/web/static
 COPY web/templates /app/web/templates
-COPY entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /usr/local/bin/autossh-server \
-    /entrypoint.sh
-
-RUN echo "$VERSION" > /etc/autossh-version
+RUN chmod +x /usr/local/bin/autossh-server && \
+    echo "$VERSION" > /etc/autossh-version
 
 EXPOSE 8080
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/usr/local/bin/autossh-server"]
+ENTRYPOINT ["/usr/local/bin/autossh-server"]

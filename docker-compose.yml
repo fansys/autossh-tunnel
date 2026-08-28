@@ -6,12 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ~/.ssh:/home/myuser/.ssh:ro
       - ./config:/etc/autossh/config:rw
+      # Optional: uncomment if you want to reuse existing host SSH keys directly
+      # - ~/.ssh:/home/myuser/.ssh:ro
     environment:
       - TZ=Asia/Shanghai
-      - PUID=1000
-      - PGID=1000
       - PORT=8080
       # Web Console Admin Authentication (Default: admin / admin888)
       - USERNAME=admin

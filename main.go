@@ -72,7 +72,11 @@ func main() {
 	}
 	sshConfigDir := os.Getenv("SSH_CONFIG_DIR")
 	if sshConfigDir == "" {
-		sshConfigDir = "/home/myuser/.ssh"
+		if _, err := os.Stat("/home/myuser/.ssh"); err == nil {
+			sshConfigDir = "/home/myuser/.ssh"
+		} else {
+			sshConfigDir = filepath.Join(configDir, "keys")
+		}
 	}
 	apiKeyEnv := os.Getenv("API_KEY")
 
